@@ -164,7 +164,7 @@ void loadIntrinsics()
 	if (camera_calibration_parsers::parseCalibrationIni(buffer, camera_name, MsgCameraInfo)){
 		ROS_INFO("Loaded calibration for camera '%s'", camera_name.c_str());
 	}else{
-		ROS_WARN("Failed to load intrinsics from camera");
+		ROS_WARN("Failed to load intrinsics for camera from file");
 	}
 }
 
