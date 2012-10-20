@@ -239,8 +239,10 @@ void Camera::setPixelClock(int *MHz)
 
 	// Sanitize to increment, minimum, and maximum
 	CHECK_ERR(is_PixelClock(hCam_, IS_PIXELCLOCK_CMD_GET_RANGE, Ranges, sizeof(Ranges)));
-	if((*MHz - Ranges[0]) % Ranges[2] != 0){
-		*MHz -= (*MHz - Ranges[0]) % Ranges[2];
+	if(Ranges[2] > 1){
+		if((*MHz - Ranges[0]) % Ranges[2] != 0){
+			*MHz -= (*MHz - Ranges[0]) % Ranges[2];
+		}
 	}
 	if(*MHz < Ranges[0]){
 		*MHz = Ranges[0];

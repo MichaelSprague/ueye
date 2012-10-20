@@ -56,7 +56,7 @@ void imageRecv(const sensor_msgs::Image::ConstPtr& rosImg)
 	// Convert the ROS Image to an OpenCV Mat
 	cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(rosImg, sensor_msgs::image_encodings::RGB8);
 
-	ROS_INFO("%d Image %dx%d at %fHz", rosImg->header.seq, cv_ptr->image.cols, cv_ptr->image.rows, rate);
+	ROS_INFO("%d %dx%d at %0.2fHz", rosImg->header.seq, cv_ptr->image.cols, cv_ptr->image.rows, rate);
 }
 
 int main(int argc, char **argv)
