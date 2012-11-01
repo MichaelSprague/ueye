@@ -257,6 +257,7 @@ int main(int argc, char **argv)
 	}else{
 		ROS_ERROR("Found 0 uEye cameras.");
 		ros::shutdown();
+		sleep(5);
 		return 0;
 	}
 
@@ -269,6 +270,7 @@ int main(int argc, char **argv)
 	if(!cam.openCamera(cameraId)){
 		ROS_ERROR("Failed to open uEye camera.");
 		ros::shutdown();
+		sleep(5);
 		return 0;
 	}
 	ROS_INFO("Opened camera %s.", cam.getCameraName());
