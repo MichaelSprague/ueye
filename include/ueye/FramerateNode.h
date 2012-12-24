@@ -32,20 +32,32 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include <ros/ros.h>
-#include <ueye/FramerateNode.h>
+#ifndef _FRAMERATE_NODE_H_
+#define _FRAMERATE_NODE_H_
 
-int main(int argc, char **argv)
+// ROS includes
+#include "ros/ros.h"
+#include <sensor_msgs/image_encodings.h>
+#include <cv_bridge/cv_bridge.h>
+
+namespace ueye {
+
+class FramerateNode
 {
-	ros::init(argc, argv, "framerate");
-	ros::NodeHandle node;
-	ros::NodeHandle priv_nh("~");
+public:
 
-	// create PathFollower class
-	ueye::FramerateNode hm(node, priv_nh);
+	FramerateNode(ros::NodeHandle node, ros::NodeHandle private_nh);
+	~FramerateNode();
 
-	// handle callbacks until shut down
-	ros::spin();
+private:
 
-	return 0;
-}
+	// ROS callbacks
+	void imageRecv(const sensor_msgs::Image::ConstPtr& rosImg);
+
+	// ROS topics
+	ros::Subscriber sub_;
+};
+
+} // namespace ueye
+
+#endif // _FRAMERATE_NODE_H_

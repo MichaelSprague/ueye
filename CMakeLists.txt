@@ -33,8 +33,12 @@ gencfg()
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_executable(camera src/ueye_node.cpp  src/ueye_camera.cpp)
+rosbuild_add_executable(camera src/camera_node.cpp src/CameraNode.cpp src/Camera.cpp)
 target_link_libraries(camera ueye_api )
 
-rosbuild_add_executable(framerate src/framerate_node.cpp)
+rosbuild_add_executable(framerate src/framerate_node.cpp src/FramerateNode.cpp)
 
+rosbuild_add_library(ueye_nodelets
+		src/camera_nodelet.cpp src/CameraNode.cpp src/Camera.cpp
+		src/framerate_nodelet.cpp src/FramerateNode.cpp)
+target_link_libraries(ueye_nodelets ueye_api )

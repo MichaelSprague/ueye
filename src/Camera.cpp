@@ -32,7 +32,7 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include "ueye_camera.h"
+#include "ueye/Camera.h"
 
 using namespace std;
 

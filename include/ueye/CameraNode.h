@@ -32,20 +32,71 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
+#ifndef _CAMERA_NODE_H_
+#define _CAMERA_NODE_H_
+
+
+// ROS communication
 #include <ros/ros.h>
-#include <ueye/FramerateNode.h>
+#include <ros/package.h>	// finds package paths
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/fill_image.h>
+#include <sensor_msgs/SetCameraInfo.h>
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
+#include <camera_calibration_parsers/parse_ini.h>
 
-int main(int argc, char **argv)
+// Dynamic reconfigure
+#include <dynamic_reconfigure/server.h>
+#include "ueye/cameraConfig.h"
+
+// File IO
+#include <sstream>
+#include <fstream>
+
+// ueye::Camera class
+#include <ueye/Camera.h>
+
+namespace ueye {
+
+class CameraNode
 {
-	ros::init(argc, argv, "framerate");
-	ros::NodeHandle node;
-	ros::NodeHandle priv_nh("~");
+public:
 
-	// create PathFollower class
-	ueye::FramerateNode hm(node, priv_nh);
+	CameraNode(ros::NodeHandle node, ros::NodeHandle private_nh);
+	~CameraNode();
 
-	// handle callbacks until shut down
-	ros::spin();
+private:
 
-	return 0;
-}
+	// ROS callbacks
+	void reconfig(cameraConfig &config, uint32_t level);
+	void timerCallback(const ros::TimerEvent& event);
+	bool setCameraInfo(sensor_msgs::SetCameraInfo::Request& req, sensor_msgs::SetCameraInfo::Response& rsp);
+
+	void loadIntrinsics();
+	void processFrame(IplImage* frame, sensor_msgs::Image &img, sensor_msgs::CameraInfo &cam_info);
+	void publishImage(IplImage * frame);
+	void startCamera();
+	void stopCamera();
+
+
+	dynamic_reconfigure::Server<cameraConfig> srv_;
+	ros::Timer timer_;
+	sensor_msgs::Image msg_image_;
+	sensor_msgs::CameraInfo msg_camera_info_;
+
+	ueye::Camera cam_;
+	bool running_;
+	bool configured_;
+	bool force_streaming_;
+
+	// ROS topics
+	image_transport::ImageTransport it_;
+	image_transport::CameraPublisher pub_stream_;
+	ros::ServiceServer srv_cam_info_;
+};
+
+} // namespace ueye
+
+#endif // _CAMERA_NODE_H_

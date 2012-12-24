@@ -32,20 +32,33 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include <ros/ros.h>
+#include <pluginlib/class_list_macros.h>
+#include <nodelet/nodelet.h>
+
 #include <ueye/FramerateNode.h>
 
-int main(int argc, char **argv)
+namespace ueye {
+
+class FramerateNodelet: public nodelet::Nodelet
 {
-	ros::init(argc, argv, "framerate");
-	ros::NodeHandle node;
-	ros::NodeHandle priv_nh("~");
+	public:
 
-	// create PathFollower class
-	ueye::FramerateNode hm(node, priv_nh);
+		FramerateNodelet() {}
+		~FramerateNodelet() {}
 
-	// handle callbacks until shut down
-	ros::spin();
+		void onInit(void)
+		{
+			node_.reset(new FramerateNode(getNodeHandle(), getPrivateNodeHandle()));
+		}
 
-	return 0;
-}
+	private:
+
+		boost::shared_ptr<FramerateNode> node_;
+	};
+
+}; // namespace ueye
+
+// Register this plugin with pluginlib.  Names must match nodelet.xml.
+//
+// parameters: package, class name, class type, base class type
+PLUGINLIB_DECLARE_CLASS(ueye, FramerateNodelet, ueye::FramerateNodelet, nodelet::Nodelet);

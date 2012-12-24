@@ -32,20 +32,41 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include <ros/ros.h>
 #include <ueye/FramerateNode.h>
 
-int main(int argc, char **argv)
+namespace ueye {
+
+FramerateNode::FramerateNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 {
-	ros::init(argc, argv, "framerate");
-	ros::NodeHandle node;
-	ros::NodeHandle priv_nh("~");
+	// Grab the topic name from the ROS parameter
+	std::string topic = std::string("/image_raw");
+	priv_nh.getParam("topic", topic);
 
-	// create PathFollower class
-	ueye::FramerateNode hm(node, priv_nh);
-
-	// handle callbacks until shut down
-	ros::spin();
-
-	return 0;
+	// Set up Subscribers
+	sub_ = node.subscribe(topic, 2, &FramerateNode::imageRecv, this, ros::TransportHints().tcpNoDelay(true));
 }
+
+FramerateNode::~FramerateNode() {}
+
+void FramerateNode::imageRecv(const sensor_msgs::Image::ConstPtr& rosImg)
+{
+	static double rate = 0.0;
+	static long int oldTimeStamp = 0;
+	long int newTimeStamp = ros::Time::now().toNSec();
+	if(oldTimeStamp != 0){
+		double temp_rate = 1000000000.0 / ((double)(newTimeStamp - oldTimeStamp));
+		if(rate == 0){
+			rate = temp_rate;
+		}else{
+			rate += (temp_rate - rate) * 0.2;
+		}
+	}
+	oldTimeStamp = newTimeStamp;
+
+	// Convert the ROS Image to an OpenCV Mat
+	cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(rosImg, sensor_msgs::image_encodings::RGB8);
+
+	ROS_INFO("%d %dx%d at %0.2fHz", rosImg->header.seq, cv_ptr->image.cols, cv_ptr->image.rows, rate);
+}
+
+} // namespace ueye

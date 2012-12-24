@@ -33,16 +33,16 @@
 *********************************************************************/
 
 #include <ros/ros.h>
-#include <ueye/FramerateNode.h>
+#include <ueye/CameraNode.h>
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "framerate");
+	ros::init(argc, argv, "camera");
 	ros::NodeHandle node;
 	ros::NodeHandle priv_nh("~");
 
 	// create PathFollower class
-	ueye::FramerateNode hm(node, priv_nh);
+	ueye::CameraNode hm(node, priv_nh);
 
 	// handle callbacks until shut down
 	ros::spin();
