@@ -225,8 +225,8 @@ sensor_msgs::ImagePtr CameraNode::processFrame(IplImage* frame, sensor_msgs::Cam
 	msg_camera_info_.roi.y_offset = 0;
 	msg_camera_info_.height = cam_.getHeight();
 	msg_camera_info_.width = cam_.getWidth();
-	msg_camera_info_.roi.width = msg_camera_info_.width;
-	msg_camera_info_.roi.height = msg_camera_info_.height;
+	msg_camera_info_.roi.width = 0;
+	msg_camera_info_.roi.height = 0;
 	sensor_msgs::CameraInfoPtr msg(new sensor_msgs::CameraInfo(msg_camera_info_));
 	info = msg;
 
