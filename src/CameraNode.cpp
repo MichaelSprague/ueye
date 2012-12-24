@@ -103,7 +103,7 @@ CameraNode::~CameraNode()
 void CameraNode::reconfig(cameraConfig &config, uint32_t level)
 {
 	force_streaming_ = config.force_streaming;
-	msg_image_.header.frame_id = msg_camera_info_.header.frame_id = config.frame_id;
+	msg_camera_info_.header.frame_id = config.frame_id;
 
 	// Hardware Gamma Correction
 	if (cam_.getHardwareGamma() != config.hardware_gamma){
@@ -217,27 +217,31 @@ void CameraNode::loadIntrinsics()
 }
 
 // Add properties to image message
-void CameraNode::processFrame(IplImage* frame, sensor_msgs::Image &img, sensor_msgs::CameraInfo &cam_info)
+sensor_msgs::ImagePtr CameraNode::processFrame(IplImage* frame, sensor_msgs::CameraInfoPtr &info)
 {
-	cam_info.header.stamp = ros::Time::now();
-	cam_info.header.seq++;
-	cam_info.roi.x_offset = 0;
-	cam_info.roi.y_offset = 0;
-	cam_info.height = cam_.getHeight();
-	cam_info.width = cam_.getWidth();
-	cam_info.roi.width = cam_info.width;
-	cam_info.roi.height = cam_info.height;
+	msg_camera_info_.header.stamp = ros::Time::now();
+	msg_camera_info_.header.seq++;
+	msg_camera_info_.roi.x_offset = 0;
+	msg_camera_info_.roi.y_offset = 0;
+	msg_camera_info_.height = cam_.getHeight();
+	msg_camera_info_.width = cam_.getWidth();
+	msg_camera_info_.roi.width = msg_camera_info_.width;
+	msg_camera_info_.roi.height = msg_camera_info_.height;
+	sensor_msgs::CameraInfoPtr msg(new sensor_msgs::CameraInfo(msg_camera_info_));
+	info = msg;
 
-	cv::Mat imgMat = frame;
-	cv_bridge::CvImage ImageConverter(cam_info.header, "bgr8", imgMat);
-	ImageConverter.toImageMsg(img);
+	converter_.header = msg_camera_info_.header;
+	converter_.encoding = "bgr8";
+	converter_.image = frame;
+	return converter_.toImageMsg();
 }
 
 // Timestamp and publish the image. Called by the streaming thread.
 void CameraNode::publishImage(IplImage * frame)
 {
-	processFrame(frame, msg_image_, msg_camera_info_);
-	pub_stream_.publish(msg_image_, msg_camera_info_);
+	sensor_msgs::CameraInfoPtr info;
+	sensor_msgs::ImagePtr img = processFrame(frame, info);
+	pub_stream_.publish(img, info);
 }
 
 void CameraNode::startCamera()

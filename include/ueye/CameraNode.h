@@ -75,7 +75,7 @@ private:
 	bool setCameraInfo(sensor_msgs::SetCameraInfo::Request& req, sensor_msgs::SetCameraInfo::Response& rsp);
 
 	void loadIntrinsics();
-	void processFrame(IplImage* frame, sensor_msgs::Image &img, sensor_msgs::CameraInfo &cam_info);
+	sensor_msgs::ImagePtr processFrame(IplImage* frame, sensor_msgs::CameraInfoPtr &info);
 	void publishImage(IplImage * frame);
 	void startCamera();
 	void stopCamera();
@@ -83,9 +83,9 @@ private:
 
 	dynamic_reconfigure::Server<cameraConfig> srv_;
 	ros::Timer timer_;
-	sensor_msgs::Image msg_image_;
 	sensor_msgs::CameraInfo msg_camera_info_;
 
+	cv_bridge::CvImage converter_;
 	ueye::Camera cam_;
 	bool running_;
 	bool configured_;

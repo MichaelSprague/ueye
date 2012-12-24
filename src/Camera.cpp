@@ -326,7 +326,7 @@ void Camera::initMemoryPool(int size)
 		if (IS_SUCCESS != is_AllocImageMem (hCam_, Width, Height, 24, &imgMem_[i], &imgMemId_[i])){
 			throw uEyeException(-1, "Failed to initialize memory.");
 		}
-		//add memory to  memory pool
+		//add memory to memory pool
 		if (IS_SUCCESS != is_SetImageMem(hCam_, imgMem_[i], imgMemId_[i])){
 			throw uEyeException(-1, "Failed to initialize memory.");
 		}
@@ -344,17 +344,15 @@ void Camera::destroyMemoryPool()
 void Camera::startCaptureThread(camCaptureCB callback)
 {
 	Streaming_ = true;
-	int Width = getWidth();
-	int Height = getHeight();
 	void * imgMem;
 	StopCapture_ = false;
 
-	initMemoryPool((int)FrameRate_);
+	initMemoryPool(4);
 
 	// Setup video event
 	CHECK_ERR(is_EnableEvent(hCam_, IS_SET_EVENT_FRAME));
 	CHECK_ERR(is_CaptureVideo(hCam_, IS_WAIT));
-	IplImage * p_img = cvCreateImageHeader(cvSize(Width,Height), IPL_DEPTH_8U, 3);
+	IplImage * p_img = cvCreateImageHeader(cvSize(getWidth(),getHeight()), IPL_DEPTH_8U, 3);
 
 	while(!StopCapture_){
 		is_WaitEvent(hCam_, IS_SET_EVENT_FRAME, (int)(2000/FrameRate_));

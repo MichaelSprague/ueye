@@ -107,7 +107,7 @@ namespace ueye{
 		int NumBuffers_;
 		void initMemoryPool(int size);
 		void destroyMemoryPool();
-		void startCaptureThread(boost::function<void (IplImage *)> captureCallback);
+		void startCaptureThread(camCaptureCB captureCallback);
 		void restartVideoCapture();
 
 		uEyeColor ColorMode_;
