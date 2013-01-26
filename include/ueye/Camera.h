@@ -68,10 +68,14 @@ namespace ueye{
 		// Initialization functions in order they should be called.
 		bool checkVersion(int &Major, int &Minor, int &Build, char *&Expected);
 		int getNumberOfCameras();
-		bool openCamera(unsigned char Id);
+		unsigned int getSerialNumberList(vector<unsigned int>& SerNo, vector<unsigned int>& DevId);
+		bool openCameraCamId(unsigned int id);
+		bool openCameraDevId(unsigned int id);
+		bool openCameraSerNo(unsigned int serial_number);
 
 		// Get Properties
 		char * getCameraName();
+		unsigned int getCameraSerialNo();
 		int getWidthMax();
 		int getHeightMax();
 		int getWidth();
@@ -119,6 +123,7 @@ namespace ueye{
 		double FrameRate_;
 		HIDS hCam_;
 		SENSORINFO camInfo_;
+		unsigned int serialNo_;
 
 		bool Streaming_;
 		bool StopCapture_;

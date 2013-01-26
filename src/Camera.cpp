@@ -85,6 +85,7 @@ void Camera::InitPrivateVariables()
 	Zoom_ = 1;
 	PixelClock_ = 20;
 	FrameRate_ = 5.0;
+	serialNo_ = 0;
 	hCam_ = 0;
 	memset(&camInfo_, 0x00, sizeof(camInfo_));
 	NumBuffers_ = 0;
@@ -116,16 +117,46 @@ int Camera::getNumberOfCameras()
 	return Num;
 }
 
-bool Camera::openCamera(unsigned char Id)
+
+unsigned int Camera::getSerialNumberList(vector<unsigned int>& SerNo, vector<unsigned int>& DevId)
+{
+	int num = getNumberOfCameras();
+	if( num > 0 ) {
+		UEYE_CAMERA_LIST *list = (UEYE_CAMERA_LIST *)malloc(sizeof(DWORD) + num*sizeof(UEYE_CAMERA_INFO));
+		list->dwCount = num;
+		if (is_GetCameraList(list) == IS_SUCCESS){
+			num = list->dwCount;
+			SerNo.resize(num);
+			DevId.resize(num);
+			for(int i=0; i<num; i++){
+				SerNo[i] = atoi(list->uci[i].SerNo);
+				DevId[i] = list->uci[i].dwDeviceID;
+//				printf("Camera %i CamId: %d DevId: %d SerNo: %u\r\n", i,
+//						list->uci[i].dwCameraID, DevId[i],
+//						SerNo[i]);
+			}
+		}else{
+			num = 0;
+		}
+		free(list);
+		return num;
+	}
+	return 0;
+}
+
+bool Camera::openCameraCamId(unsigned int id)
 {
 	if(getNumberOfCameras() < 1){
 		return false;
 	}
 
-	hCam_ = Id;
+	hCam_ = id;
 	CHECK_ERR(is_InitCamera(&hCam_, 0));
 
-	CHECK_ERR(is_GetSensorInfo (hCam_, &camInfo_));
+	CHECK_ERR(is_GetSensorInfo(hCam_, &camInfo_));
+	CAMINFO info;
+	CHECK_ERR(is_GetCameraInfo(hCam_, &info));
+	serialNo_ = atoi(info.SerNo);
 
 	setColorMode(ColorMode_);
 	setAutoExposure(&AutoExposure_);
@@ -138,10 +169,29 @@ bool Camera::openCamera(unsigned char Id)
 	setFrameRate(&FrameRate_);
 	return true;
 }
+bool Camera::openCameraDevId(unsigned int id)
+{
+	return openCameraCamId(id | IS_USE_DEVICE_ID);
+}
+bool Camera::openCameraSerNo(unsigned int serial_number)
+{
+	vector<unsigned int> SerNo;
+	vector<unsigned int> DevId;
+	unsigned int num = getSerialNumberList(SerNo, DevId);
+	for(unsigned int i=0; i<num; i++){
+		if(SerNo[i] == serial_number){
+			return openCameraDevId(DevId[i]);
+		}
+	}
+	return false;
+}
 
 char * Camera::getCameraName()
 {
 	return camInfo_.strSensorName;
+}
+unsigned int Camera::getCameraSerialNo(){
+	return serialNo_;
 }
 int Camera::getZoom()
 {

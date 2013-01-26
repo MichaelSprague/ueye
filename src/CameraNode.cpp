@@ -52,10 +52,6 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 		ROS_WARN("Loaded uEye SDK %d.%d.%d. Expecting %s.", Major, Minor, Build, Version);
 	}
 
-	// Grab the cameraId from the ROS parameter
-	int cameraId = 0;
-	priv_nh.getParam("cameraId", cameraId);
-
 	// Make sure there is at least one camera available
 	int NumberOfCameras = cam_.getNumberOfCameras();
 	if(NumberOfCameras > 0){
@@ -70,13 +66,29 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 		return;
 	}
 
-	// Open the camera
-	if(!cam_.openCamera(cameraId)){
-		ROS_ERROR("Failed to open uEye camera.");
-		ros::shutdown();
-		return;
+	// Open camera with either serialNo, deviceId, or cameraId
+	int id = 0;
+	if(priv_nh.getParam("serialNo", id)){
+		if(!cam_.openCameraSerNo(id)){
+			ROS_ERROR("Failed to open uEye camera with serialNo: %d.", id);
+			ros::shutdown();
+			return;
+		}
+	}else if(priv_nh.getParam("deviceId", id)){
+		if(!cam_.openCameraDevId(id)){
+			ROS_ERROR("Failed to open uEye camera with deviceId: %d.", id);
+			ros::shutdown();
+			return;
+		}
+	}else{
+		priv_nh.getParam("cameraId", id);
+		if(!cam_.openCameraCamId(id)){
+			ROS_ERROR("Failed to open uEye camera with cameraId: %d.", id);
+			ros::shutdown();
+			return;
+		}
 	}
-	ROS_INFO("Opened camera %s.", cam_.getCameraName());
+	ROS_INFO("Opened camera %s %u", cam_.getCameraName(), cam_.getCameraSerialNo());
 
 	// Try to load intrinsics from file.
 	loadIntrinsics();
