@@ -60,6 +60,8 @@
 
 namespace ueye {
 
+const std::string configFileName(Camera &cam);
+
 class CameraNode
 {
 public:
@@ -72,6 +74,7 @@ private:
 	// ROS callbacks
 	void reconfig(cameraConfig &config, uint32_t level);
 	void timerCallback(const ros::TimerEvent& event);
+	void timerForceTrigger(const ros::TimerEvent& event);
 	bool setCameraInfo(sensor_msgs::SetCameraInfo::Request& req, sensor_msgs::SetCameraInfo::Response& rsp);
 
 	void loadIntrinsics();
@@ -79,10 +82,11 @@ private:
 	void publishImage(IplImage * frame);
 	void startCamera();
 	void stopCamera();
-
+	void handlePath(std::string &path);
 
 	dynamic_reconfigure::Server<cameraConfig> srv_;
 	ros::Timer timer_;
+	ros::Timer timer_force_trigger_;
 	sensor_msgs::CameraInfo msg_camera_info_;
 
 	cv_bridge::CvImage converter_;
@@ -90,6 +94,8 @@ private:
 	bool running_;
 	bool configured_;
 	bool force_streaming_;
+	std::string config_path_;
+	int trigger_mode_;
 
 	// ROS topics
 	image_transport::ImageTransport it_;

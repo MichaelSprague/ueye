@@ -36,6 +36,8 @@
 
 using namespace std;
 
+#define DEBUG_ERROR_CHECKS 1
+
 #if DEBUG_ERROR_CHECKS
 #define CHECK_ERR	CheckError
 #else
@@ -99,12 +101,12 @@ Camera::Camera()
 
 bool Camera::checkVersion(int &Major, int &Minor, int &Build, char *&Expected)
 {
-	Expected = (char*)"4.2.11";
+	Expected = (char*)"4.20.6";
 	Build = is_GetDLLVersion();
 	Major = (Build >> 24) & 0x000000FF;
 	Minor = (Build >> 16) & 0x000000FF;
 	Build &= 0x0000FFFF;
-	if((Major == 4) && (Minor == 2) && (Build == 11)){
+	if((Major == 4) && (Minor == 20) && (Build == 6)){
 		return true;
 	}
 	return false;
@@ -225,6 +227,14 @@ int Camera::getPixelClock()
 {
 	return PixelClock_;
 }
+TriggerMode Camera::getTriggerMode()
+{
+	return (TriggerMode)is_SetExternalTrigger(hCam_, IS_GET_EXTERNALTRIGGER);
+}
+TriggerMode Camera::getSupportedTriggers()
+{
+	return (TriggerMode)is_SetExternalTrigger(hCam_, IS_GET_SUPPORTED_TRIGGER_MODE);
+}
 
 void Camera::setColorMode(uEyeColor mode)
 {
@@ -244,6 +254,8 @@ void Camera::setAutoExposure(bool *Enable)
 }
 void  Camera::setExposure(double *time_ms)
 {
+	bool b = false;
+	setAutoExposure(&b);
 	CHECK_ERR(is_Exposure (hCam_, IS_EXPOSURE_CMD_SET_EXPOSURE, time_ms, sizeof(double)));
 	ExposureTime_ = *time_ms;
 }
@@ -308,6 +320,22 @@ void Camera::setFrameRate(double *rate)
 {
 	CHECK_ERR(is_SetFrameRate(hCam_, *rate, rate));
 	FrameRate_ = *rate;
+}
+bool Camera::setTriggerMode(TriggerMode mode)
+{
+	if((mode == 0) || (mode & getSupportedTriggers())){
+		if(is_SetExternalTrigger(hCam_, mode) == IS_SUCCESS){
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Camera::forceTrigger()
+{
+	if(Streaming_)
+		return is_ForceTrigger(hCam_) == IS_SUCCESS;
+	return false;
 }
 
 int Camera::getSubsampleParam(int *scale)
@@ -405,10 +433,13 @@ void Camera::startCaptureThread(camCaptureCB callback)
 	IplImage * p_img = cvCreateImageHeader(cvSize(getWidth(),getHeight()), IPL_DEPTH_8U, 3);
 
 	while(!StopCapture_){
-		is_WaitEvent(hCam_, IS_SET_EVENT_FRAME, (int)(2000/FrameRate_));
-		is_GetImageMem(hCam_, &imgMem);
-		p_img->imageData = (char*)imgMem;
-		callback(p_img);
+		// Wait for image. Timeout after 2*FramePeriod = (2000ms/FrameRate)
+		if(is_WaitEvent(hCam_, IS_SET_EVENT_FRAME, (int)(2000/FrameRate_)) == IS_SUCCESS){
+			if(is_GetImageMem(hCam_, &imgMem) == IS_SUCCESS){
+				p_img->imageData = (char*)imgMem;
+				callback(p_img);
+			}
+		}
 	}
 
 	// Stop video event

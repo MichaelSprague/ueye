@@ -58,6 +58,14 @@ namespace ueye{
 		RGB		= IS_CM_BGR8_PACKED,
 		YCbYCr	= IS_CM_CBYCRY_PACKED,
 	};
+	enum TriggerMode{
+		TRIGGER_OFF			= IS_SET_TRIGGER_OFF,
+		TRIGGER_HI_LO		= IS_SET_TRIGGER_HI_LO,
+		TRIGGER_LO_HI		= IS_SET_TRIGGER_LO_HI,
+		TRIGGER_SOFTWARE	= IS_SET_TRIGGER_SOFTWARE,
+		TRIGGER_HI_LO_SYNC	= IS_SET_TRIGGER_HI_LO_SYNC,
+		TRIGGER_LO_HI_SYNC	= IS_SET_TRIGGER_LO_HI_SYNC,
+	};
 
 	class Camera
 	{
@@ -84,6 +92,8 @@ namespace ueye{
 		bool getAutoExposure();
 		bool getHardwareGamma();
 		int getPixelClock();
+		TriggerMode getTriggerMode();
+		TriggerMode getSupportedTriggers();
 
 		// Set Properties
 		void setColorMode(uEyeColor mode);
@@ -93,6 +103,9 @@ namespace ueye{
 		void setZoom(int *zoom);
 		void setPixelClock(int *MHz);
 		void setFrameRate(double *rate);
+		bool setTriggerMode(TriggerMode mode);
+
+		bool forceTrigger();
 
 		typedef boost::function<void (IplImage *)> camCaptureCB;
 		void startVideoCapture(camCaptureCB);

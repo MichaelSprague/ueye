@@ -36,12 +36,19 @@
 
 namespace ueye {
 
+const std::string configFileName(Camera &cam){
+	stringstream ss;
+	ss << "Cal-" << cam.getCameraName() << "-" << cam.getCameraSerialNo() << ".txt";
+	return ss.str();
+}
+
 CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 : it_(node)
 {
 	running_ = false;
 	configured_ = false;
 	force_streaming_ = false;
+	trigger_mode_ = -1;
 
 	// Check for a valid uEye installation and supported version
 	char *Version;
@@ -90,8 +97,16 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	}
 	ROS_INFO("Opened camera %s %u", cam_.getCameraName(), cam_.getCameraSerialNo());
 
+	std::string path;
+	priv_nh.getParam("config_path", path);
+	handlePath(path);
+	priv_nh.setParam("config_path", path);
+
 	// Try to load intrinsics from file.
 	loadIntrinsics();
+
+	timer_force_trigger_ = node.createTimer(ros::Duration(1.0), &CameraNode::timerForceTrigger, this);
+	timer_force_trigger_.stop();
 
 	// Setup Dynamic Reconfigure
 	dynamic_reconfigure::Server<cameraConfig>::CallbackType f = boost::bind(&CameraNode::reconfig, this, _1, _2);
@@ -112,10 +127,52 @@ CameraNode::~CameraNode()
 	stopCamera();
 }
 
+void CameraNode::handlePath(std::string &path)
+{
+	// Set default path if not present
+	if(path.length() == 0){
+		path = ros::package::getPath("ueye");
+	}
+
+	// Remove trailing "/" from folder path
+	unsigned int length = path.length();
+	if(length > 0){
+		if(path.c_str()[length-1] == '/'){
+			path = path.substr(0, length-1);
+		}
+	}
+	config_path_ = path;
+}
 void CameraNode::reconfig(cameraConfig &config, uint32_t level)
 {
 	force_streaming_ = config.force_streaming;
 	msg_camera_info_.header.frame_id = config.frame_id;
+
+	handlePath(config.config_path);
+
+	// Trigger
+	if (trigger_mode_ != config.trigger){
+		stopCamera();
+		TriggerMode mode;
+		switch(config.trigger){
+		case 1:	// Software
+		case 2:
+			mode = TRIGGER_LO_HI;
+			break;
+		case 3:
+			mode = TRIGGER_HI_LO;
+			break;
+		case 0:
+		default:
+			mode = TRIGGER_OFF;
+			break;
+		}
+		if(!cam_.setTriggerMode(mode)){
+			cam_.setTriggerMode(TRIGGER_OFF);
+			config.trigger = 0;
+		}
+	}
+	trigger_mode_ = config.trigger;
 
 	// Hardware Gamma Correction
 	if (cam_.getHardwareGamma() != config.hardware_gamma){
@@ -134,6 +191,9 @@ void CameraNode::reconfig(cameraConfig &config, uint32_t level)
 
 	// Frame Rate
 	cam_.setFrameRate(&config.frame_rate);
+	if(trigger_mode_ == 1){
+		timer_force_trigger_.setPeriod(ros::Duration(1/config.frame_rate));
+	}
 
 	// Exposure
 	if (cam_.getAutoExposure() != config.auto_exposure){
@@ -152,6 +212,14 @@ void CameraNode::timerCallback(const ros::TimerEvent& event)
 		startCamera();
 	}else{
 		stopCamera();
+	}
+}
+void CameraNode::timerForceTrigger(const ros::TimerEvent& event)
+{
+	if(trigger_mode_ == 1){
+		if(!cam_.forceTrigger()){
+			ROS_WARN("Failed to force trigger");
+		}
 	}
 }
 
@@ -183,9 +251,7 @@ bool CameraNode::setCameraInfo(sensor_msgs::SetCameraInfo::Request& req, sensor_
 	}else{
 		std::string ini = ini_stream.str();
 		fstream param_file;
-		std::string filename = ros::package::getPath("ueye") + "/Calibration-";
-		filename += cam_.getCameraName();
-		filename += ".txt";
+		std::string filename = config_path_ + "/" + configFileName(cam_);
 		param_file.open(filename.c_str(), ios::in | ios::out | ios::trunc);
 
 		if (param_file.is_open()) {
@@ -210,7 +276,7 @@ void CameraNode::loadIntrinsics()
 {
 	char buffer[12800];
 
-	std::string MyPath = ros::package::getPath("ueye") + "/Calibration-" + cam_.getCameraName() + ".txt";
+	std::string MyPath = config_path_ + "/" + configFileName(cam_);
 	fstream param_file;
 	param_file.open(MyPath.c_str(), ios::out | ios::in);
 
@@ -260,17 +326,19 @@ void CameraNode::startCamera()
 {
 	if(running_ || !configured_)
 		return;
-	ROS_INFO("Started video stream.");
 	cam_.startVideoCapture(boost::bind(&CameraNode::publishImage, this, _1));
+	timer_force_trigger_.start();
+	ROS_INFO("Started video stream.");
 	running_ = true;
 }
 
 void CameraNode::stopCamera()
 {
+	timer_force_trigger_.stop();
 	if(!running_)
 		return;
-	ROS_INFO("Stopped video stream.");
 	cam_.stopVideoCapture();
+	ROS_INFO("Stopped video stream.");
 	running_ = false;
 }
 
