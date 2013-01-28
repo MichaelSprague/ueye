@@ -36,7 +36,7 @@
 
 using namespace std;
 
-#define DEBUG_ERROR_CHECKS 1
+#define DEBUG_ERROR_CHECKS 0
 
 #if DEBUG_ERROR_CHECKS
 #define CHECK_ERR	CheckError
@@ -133,9 +133,6 @@ unsigned int Camera::getSerialNumberList(vector<unsigned int>& SerNo, vector<uns
 			for(int i=0; i<num; i++){
 				SerNo[i] = atoi(list->uci[i].SerNo);
 				DevId[i] = list->uci[i].dwDeviceID;
-//				printf("Camera %i CamId: %d DevId: %d SerNo: %u\r\n", i,
-//						list->uci[i].dwCameraID, DevId[i],
-//						SerNo[i]);
 			}
 		}else{
 			num = 0;

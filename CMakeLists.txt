@@ -36,9 +36,13 @@ gencfg()
 rosbuild_add_executable(camera src/camera_node.cpp src/CameraNode.cpp src/Camera.cpp)
 target_link_libraries(camera ueye_api )
 
+rosbuild_add_executable(stereo src/stereo_node.cpp src/StereoNode.cpp src/CameraNode.cpp src/Camera.cpp)
+target_link_libraries(stereo ueye_api )
+
 rosbuild_add_executable(framerate src/framerate_node.cpp src/FramerateNode.cpp)
 
 rosbuild_add_library(ueye_nodelets
 		src/camera_nodelet.cpp src/CameraNode.cpp src/Camera.cpp
+		src/stereo_nodelet.cpp src/StereoNode.cpp
 		src/framerate_nodelet.cpp src/FramerateNode.cpp)
 target_link_libraries(ueye_nodelets ueye_api )

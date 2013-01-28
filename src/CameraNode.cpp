@@ -38,7 +38,7 @@ namespace ueye {
 
 const std::string configFileName(Camera &cam){
 	stringstream ss;
-	ss << "Cal-" << cam.getCameraName() << "-" << cam.getCameraSerialNo() << ".txt";
+	ss << "Cal-" << cam.getCameraName() << "-" << cam.getZoom() << "-" << cam.getCameraSerialNo() << ".txt";
 	return ss.str();
 }
 
@@ -48,7 +48,7 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	running_ = false;
 	configured_ = false;
 	force_streaming_ = false;
-	trigger_mode_ = -1;
+	trigger_mode_ = zoom_ = -1;
 
 	// Check for a valid uEye installation and supported version
 	char *Version;
@@ -97,14 +97,6 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	}
 	ROS_INFO("Opened camera %s %u", cam_.getCameraName(), cam_.getCameraSerialNo());
 
-	std::string path;
-	priv_nh.getParam("config_path", path);
-	handlePath(path);
-	priv_nh.setParam("config_path", path);
-
-	// Try to load intrinsics from file.
-	loadIntrinsics();
-
 	timer_force_trigger_ = node.createTimer(ros::Duration(1.0), &CameraNode::timerForceTrigger, this);
 	timer_force_trigger_.stop();
 
@@ -146,8 +138,6 @@ void CameraNode::handlePath(std::string &path)
 void CameraNode::reconfig(cameraConfig &config, uint32_t level)
 {
 	force_streaming_ = config.force_streaming;
-	msg_camera_info_.header.frame_id = config.frame_id;
-
 	handlePath(config.config_path);
 
 	// Trigger
@@ -203,6 +193,12 @@ void CameraNode::reconfig(cameraConfig &config, uint32_t level)
 		cam_.setExposure(&config.exposure_time);
 	}
 
+	if(zoom_ != config.zoom){
+		zoom_ = config.zoom;
+		loadIntrinsics();
+	}
+
+	msg_camera_info_.header.frame_id = config.frame_id;
 	configured_ = true;
 }
 

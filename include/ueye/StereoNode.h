@@ -32,9 +32,10 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#ifndef _CAMERA_NODE_H_
-#define _CAMERA_NODE_H_
+#ifndef _STEREO_NODE_H_
+#define _STEREO_NODE_H_
 
+#include "CameraNode.h"
 
 // ROS communication
 #include <ros/ros.h>
@@ -60,26 +61,30 @@
 
 namespace ueye {
 
-const std::string configFileName(Camera &cam);
-
-class CameraNode
+class StereoNode
 {
 public:
 
-	CameraNode(ros::NodeHandle node, ros::NodeHandle private_nh);
-	~CameraNode();
+	StereoNode(ros::NodeHandle node, ros::NodeHandle private_nh);
+	~StereoNode();
 
 private:
 
 	// ROS callbacks
 	void reconfig(cameraConfig &config, uint32_t level);
+	void reconfigCam(cameraConfig &config, uint32_t level, Camera &cam);
 	void timerCallback(const ros::TimerEvent& event);
 	void timerForceTrigger(const ros::TimerEvent& event);
-	bool setCameraInfo(sensor_msgs::SetCameraInfo::Request& req, sensor_msgs::SetCameraInfo::Response& rsp);
+	bool setCameraInfoL(sensor_msgs::SetCameraInfo::Request& req, sensor_msgs::SetCameraInfo::Response& rsp);
+	bool setCameraInfoR(sensor_msgs::SetCameraInfo::Request& req, sensor_msgs::SetCameraInfo::Response& rsp);
+	bool setCameraInfo(sensor_msgs::SetCameraInfo::Request& req, sensor_msgs::SetCameraInfo::Response& rsp,
+			Camera& cam, sensor_msgs::CameraInfo &msg_info);
 
-	void loadIntrinsics();
-	sensor_msgs::ImagePtr processFrame(IplImage* frame, sensor_msgs::CameraInfoPtr &info);
-	void publishImage(IplImage * frame);
+	void loadIntrinsics(Camera &cam, sensor_msgs::CameraInfo &msg_info);
+	sensor_msgs::ImagePtr processFrame(IplImage* frame, Camera &cam, cv_bridge::CvImage &converter,
+			sensor_msgs::CameraInfoPtr &info, sensor_msgs::CameraInfo &msg_info);
+	void publishImageL(IplImage * frame);
+	void publishImageR(IplImage * frame);
 	void startCamera();
 	void stopCamera();
 	void handlePath(std::string &path);
@@ -87,23 +92,24 @@ private:
 	dynamic_reconfigure::Server<cameraConfig> srv_;
 	ros::Timer timer_;
 	ros::Timer timer_force_trigger_;
-	sensor_msgs::CameraInfo msg_camera_info_;
+	sensor_msgs::CameraInfo l_msg_camera_info_, r_msg_camera_info_;
 
-	cv_bridge::CvImage converter_;
-	ueye::Camera cam_;
+	cv_bridge::CvImage l_converter_, r_converter_;
+	ueye::Camera l_cam_, r_cam_;
 	bool running_;
 	bool configured_;
 	bool force_streaming_;
 	std::string config_path_;
 	int trigger_mode_;
 	int zoom_;
+	ros::Time l_stamp_, r_stamp_;
 
 	// ROS topics
 	image_transport::ImageTransport it_;
-	image_transport::CameraPublisher pub_stream_;
-	ros::ServiceServer srv_cam_info_;
+	image_transport::CameraPublisher l_pub_stream_, r_pub_stream_;
+	ros::ServiceServer l_srv_cam_info_, r_srv_cam_info_;
 };
 
 } // namespace ueye
 
-#endif // _CAMERA_NODE_H_
+#endif // _STEREO_NODE_H_

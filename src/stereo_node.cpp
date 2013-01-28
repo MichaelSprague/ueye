@@ -32,78 +32,20 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#ifndef _CAMERA_NODE_H_
-#define _CAMERA_NODE_H_
-
-
-// ROS communication
 #include <ros/ros.h>
-#include <ros/package.h>	// finds package paths
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
-#include <sensor_msgs/fill_image.h>
-#include <sensor_msgs/SetCameraInfo.h>
-#include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
-#include <camera_calibration_parsers/parse_ini.h>
+#include <ueye/StereoNode.h>
 
-// Dynamic reconfigure
-#include <dynamic_reconfigure/server.h>
-#include "ueye/cameraConfig.h"
-
-// File IO
-#include <sstream>
-#include <fstream>
-
-// ueye::Camera class
-#include <ueye/Camera.h>
-
-namespace ueye {
-
-const std::string configFileName(Camera &cam);
-
-class CameraNode
+int main(int argc, char **argv)
 {
-public:
+	ros::init(argc, argv, "camera");
+	ros::NodeHandle node;
+	ros::NodeHandle priv_nh("~");
 
-	CameraNode(ros::NodeHandle node, ros::NodeHandle private_nh);
-	~CameraNode();
+	// create PathFollower class
+	ueye::StereoNode hm(node, priv_nh);
 
-private:
+	// handle callbacks until shut down
+	ros::spin();
 
-	// ROS callbacks
-	void reconfig(cameraConfig &config, uint32_t level);
-	void timerCallback(const ros::TimerEvent& event);
-	void timerForceTrigger(const ros::TimerEvent& event);
-	bool setCameraInfo(sensor_msgs::SetCameraInfo::Request& req, sensor_msgs::SetCameraInfo::Response& rsp);
-
-	void loadIntrinsics();
-	sensor_msgs::ImagePtr processFrame(IplImage* frame, sensor_msgs::CameraInfoPtr &info);
-	void publishImage(IplImage * frame);
-	void startCamera();
-	void stopCamera();
-	void handlePath(std::string &path);
-
-	dynamic_reconfigure::Server<cameraConfig> srv_;
-	ros::Timer timer_;
-	ros::Timer timer_force_trigger_;
-	sensor_msgs::CameraInfo msg_camera_info_;
-
-	cv_bridge::CvImage converter_;
-	ueye::Camera cam_;
-	bool running_;
-	bool configured_;
-	bool force_streaming_;
-	std::string config_path_;
-	int trigger_mode_;
-	int zoom_;
-
-	// ROS topics
-	image_transport::ImageTransport it_;
-	image_transport::CameraPublisher pub_stream_;
-	ros::ServiceServer srv_cam_info_;
-};
-
-} // namespace ueye
-
-#endif // _CAMERA_NODE_H_
+	return 0;
+}
