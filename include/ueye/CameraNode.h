@@ -41,7 +41,6 @@
 #include <ros/package.h>	// finds package paths
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <sensor_msgs/fill_image.h>
 #include <sensor_msgs/SetCameraInfo.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
