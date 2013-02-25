@@ -48,6 +48,8 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	running_ = false;
 	configured_ = false;
 	force_streaming_ = false;
+	auto_exposure_ = false;
+	auto_gain_ = false;
 	trigger_mode_ = zoom_ = -1;
 
 	// Check for a valid uEye installation and supported version
@@ -97,11 +99,8 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	}
 	ROS_INFO("Opened camera %s %u", cam_.getCameraName(), cam_.getCameraSerialNo());
 
-	timer_force_trigger_ = node.createTimer(ros::Duration(1.0), &CameraNode::timerForceTrigger, this);
-	timer_force_trigger_.stop();
-
 	// Setup Dynamic Reconfigure
-	dynamic_reconfigure::Server<cameraConfig>::CallbackType f = boost::bind(&CameraNode::reconfig, this, _1, _2);
+	dynamic_reconfigure::Server<monoConfig>::CallbackType f = boost::bind(&CameraNode::reconfig, this, _1, _2);
 	srv_.setCallback(f);	//start dynamic reconfigure
 
 	// Service call for setting calibration.
@@ -135,7 +134,7 @@ void CameraNode::handlePath(std::string &path)
 	}
 	config_path_ = path;
 }
-void CameraNode::reconfig(cameraConfig &config, uint32_t level)
+void CameraNode::reconfig(monoConfig &config, uint32_t level)
 {
 	force_streaming_ = config.force_streaming;
 	handlePath(config.config_path);
@@ -145,28 +144,50 @@ void CameraNode::reconfig(cameraConfig &config, uint32_t level)
 		stopCamera();
 		TriggerMode mode;
 		switch(config.trigger){
-		case 1:	// Software
-		case 2:
+		case mono_TGR_HARDWARE_RISING:
 			mode = TRIGGER_LO_HI;
 			break;
-		case 3:
+		case mono_TGR_HARDWARE_FALLING:
 			mode = TRIGGER_HI_LO;
 			break;
-		case 0:
+		case mono_TGR_AUTO:
 		default:
 			mode = TRIGGER_OFF;
 			break;
 		}
 		if(!cam_.setTriggerMode(mode)){
 			cam_.setTriggerMode(TRIGGER_OFF);
-			config.trigger = 0;
+			config.trigger = mono_TGR_AUTO;
 		}
 	}
 	trigger_mode_ = config.trigger;
 
+	// Latch Auto Parameters
+	if(auto_gain_ && !config.auto_gain){
+		config.gain = cam_.getHardwareGain();
+	}
+	auto_gain_ = config.auto_gain;
+	if(auto_exposure_ && !config.auto_exposure){
+		config.exposure_time = cam_.getExposure();
+	}
+	auto_exposure_ = config.auto_exposure;
+
 	// Hardware Gamma Correction
 	if (cam_.getHardwareGamma() != config.hardware_gamma){
 		cam_.setHardwareGamma(&config.hardware_gamma);
+	}
+
+	// Gain Boost
+	if (cam_.getGainBoost() != config.gain_boost){
+		cam_.setGainBoost(&config.gain_boost);
+	}
+
+	// Hardware Gain
+	if (cam_.getAutoGain() != config.auto_gain){
+		cam_.setAutoGain(&config.auto_gain);
+	}
+	if (!config.auto_gain){
+		cam_.setHardwareGain(&config.gain);
 	}
 
 	// Zoom
@@ -181,9 +202,6 @@ void CameraNode::reconfig(cameraConfig &config, uint32_t level)
 
 	// Frame Rate
 	cam_.setFrameRate(&config.frame_rate);
-	if(trigger_mode_ == 1){
-		timer_force_trigger_.setPeriod(ros::Duration(1/config.frame_rate));
-	}
 
 	// Exposure
 	if (cam_.getAutoExposure() != config.auto_exposure){
@@ -193,6 +211,7 @@ void CameraNode::reconfig(cameraConfig &config, uint32_t level)
 		cam_.setExposure(&config.exposure_time);
 	}
 
+	// Zoom
 	if(zoom_ != config.zoom){
 		zoom_ = config.zoom;
 		loadIntrinsics();
@@ -208,14 +227,6 @@ void CameraNode::timerCallback(const ros::TimerEvent& event)
 		startCamera();
 	}else{
 		stopCamera();
-	}
-}
-void CameraNode::timerForceTrigger(const ros::TimerEvent& event)
-{
-	if(trigger_mode_ == 1){
-		if(!cam_.forceTrigger()){
-			ROS_WARN("Failed to force trigger");
-		}
 	}
 }
 
@@ -323,14 +334,12 @@ void CameraNode::startCamera()
 	if(running_ || !configured_)
 		return;
 	cam_.startVideoCapture(boost::bind(&CameraNode::publishImage, this, _1));
-	timer_force_trigger_.start();
 	ROS_INFO("Started video stream.");
 	running_ = true;
 }
 
 void CameraNode::stopCamera()
 {
-	timer_force_trigger_.stop();
 	if(!running_)
 		return;
 	cam_.stopVideoCapture();

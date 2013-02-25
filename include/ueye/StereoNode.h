@@ -42,7 +42,6 @@
 #include <ros/package.h>	// finds package paths
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <sensor_msgs/fill_image.h>
 #include <sensor_msgs/SetCameraInfo.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
@@ -50,7 +49,7 @@
 
 // Dynamic reconfigure
 #include <dynamic_reconfigure/server.h>
-#include "ueye/cameraConfig.h"
+#include "ueye/stereoConfig.h"
 
 // File IO
 #include <sstream>
@@ -71,8 +70,8 @@ public:
 private:
 
 	// ROS callbacks
-	void reconfig(cameraConfig &config, uint32_t level);
-	void reconfigCam(cameraConfig &config, uint32_t level, Camera &cam);
+	void reconfig(stereoConfig &config, uint32_t level);
+	void reconfigCam(stereoConfig &config, uint32_t level, Camera &cam);
 	void timerCallback(const ros::TimerEvent& event);
 	void timerForceTrigger(const ros::TimerEvent& event);
 	bool setCameraInfoL(sensor_msgs::SetCameraInfo::Request& req, sensor_msgs::SetCameraInfo::Response& rsp);
@@ -89,7 +88,7 @@ private:
 	void stopCamera();
 	void handlePath(std::string &path);
 
-	dynamic_reconfigure::Server<cameraConfig> srv_;
+	dynamic_reconfigure::Server<stereoConfig> srv_;
 	ros::Timer timer_;
 	ros::Timer timer_force_trigger_;
 	sensor_msgs::CameraInfo l_msg_camera_info_, r_msg_camera_info_;
@@ -101,6 +100,8 @@ private:
 	bool force_streaming_;
 	std::string config_path_;
 	int trigger_mode_;
+	bool auto_exposure_;
+	bool auto_gain_;
 	int zoom_;
 	ros::Time l_stamp_, r_stamp_;
 

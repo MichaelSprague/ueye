@@ -84,9 +84,13 @@ void Camera::InitPrivateVariables()
 	AutoExposure_ = false;
 	ExposureTime_ = 99.0;
 	HardwareGamma_ = true;
+	GainBoost_ = false;
 	Zoom_ = 1;
 	PixelClock_ = 20;
+	AutoGain_ = false;
+	HardwareGain_ = 100;
 	FrameRate_ = 5.0;
+	FlashGlobalParams_ = false;
 	serialNo_ = 0;
 	hCam_ = 0;
 	memset(&camInfo_, 0x00, sizeof(camInfo_));
@@ -163,6 +167,11 @@ bool Camera::openCameraCamId(unsigned int id)
 		setExposure(&ExposureTime_);
 	}
 	setHardwareGamma(&HardwareGamma_);
+	setGainBoost(&GainBoost_);
+	setAutoGain(&AutoGain_);
+	if(!AutoGain_){
+		setHardwareGain(&HardwareGain_);
+	}
 	setZoom(&Zoom_);
 	setPixelClock(&PixelClock_);
 	setFrameRate(&FrameRate_);
@@ -216,6 +225,12 @@ bool Camera::getAutoExposure()
 {
 	return AutoExposure_;
 }
+double Camera::getExposure()
+{
+	double time_ms;
+	CHECK_ERR(is_Exposure (hCam_, IS_EXPOSURE_CMD_GET_EXPOSURE, &time_ms, sizeof(double)));
+	return time_ms;
+}
 bool Camera::getHardwareGamma()
 {
 	return HardwareGamma_;
@@ -223,6 +238,19 @@ bool Camera::getHardwareGamma()
 int Camera::getPixelClock()
 {
 	return PixelClock_;
+}
+bool Camera::getGainBoost()
+{
+	return GainBoost_;
+}
+bool Camera::getAutoGain()
+{
+	return AutoGain_;
+}
+unsigned int Camera::getHardwareGain()
+{
+	HardwareGain_ = is_SetHWGainFactor(hCam_, IS_GET_MASTER_GAIN_FACTOR, 0);
+	return HardwareGain_;
 }
 TriggerMode Camera::getTriggerMode()
 {
@@ -254,6 +282,7 @@ void  Camera::setExposure(double *time_ms)
 	bool b = false;
 	setAutoExposure(&b);
 	CHECK_ERR(is_Exposure (hCam_, IS_EXPOSURE_CMD_SET_EXPOSURE, time_ms, sizeof(double)));
+	flashUpdateGlobalParams();
 	ExposureTime_ = *time_ms;
 }
 void Camera::setHardwareGamma(bool *Enable)
@@ -316,7 +345,43 @@ void Camera::setPixelClock(int *MHz)
 void Camera::setFrameRate(double *rate)
 {
 	CHECK_ERR(is_SetFrameRate(hCam_, *rate, rate));
+	flashUpdateGlobalParams();
 	FrameRate_ = *rate;
+}
+void Camera::setGainBoost(bool *enable)
+{
+	if(is_SetGainBoost(hCam_, IS_GET_SUPPORTED_GAINBOOST) == IS_SET_GAINBOOST_ON){
+		if(*enable)
+			is_SetGainBoost(hCam_, IS_SET_GAINBOOST_ON);
+		else
+			is_SetGainBoost(hCam_, IS_SET_GAINBOOST_OFF);
+		GainBoost_ = is_SetGainBoost(hCam_, IS_GET_GAINBOOST) == IS_SET_GAINBOOST_ON;
+	}else{
+		GainBoost_ = false;
+	}
+	*enable = GainBoost_;
+}
+void Camera::setAutoGain(bool *Enable)
+{
+	double param1 = *Enable ? 1.0 : 0.0;
+	double param2 = 0;
+	if(IS_SUCCESS != is_SetAutoParameter(hCam_, IS_SET_ENABLE_AUTO_GAIN, &param1, &param2)){
+		param1 = 0;
+		is_SetAutoParameter(hCam_, IS_SET_ENABLE_AUTO_GAIN, &param1, &param2);
+		*Enable = false;
+	}
+	AutoGain_ = *Enable;
+}
+void Camera::setHardwareGain(int *gain)
+{
+	bool b = false;
+	setAutoGain(&b);
+	if(*gain < 0)
+		*gain = 0;
+	if(*gain > 400)
+		*gain = 400;
+	HardwareGain_ = is_SetHWGainFactor(hCam_, IS_SET_MASTER_GAIN_FACTOR, *gain);
+	*gain = HardwareGain_;
 }
 bool Camera::setTriggerMode(TriggerMode mode)
 {
@@ -326,6 +391,41 @@ bool Camera::setTriggerMode(TriggerMode mode)
 		}
 	}
 	return false;
+}
+void Camera::setFlashWithGlobalParams(FlashMode mode)
+{
+	UINT nMode = mode;
+	switch(mode)
+	{
+	case FLASH_FREERUN_ACTIVE_LO:
+	case FLASH_FREERUN_ACTIVE_HI:
+	case FLASH_TRIGGER_ACTIVE_LO:
+	case FLASH_TRIGGER_ACTIVE_HI:
+		FlashGlobalParams_ = true;
+		break;
+
+	case FLASH_CONSTANT_HIGH:
+	case FLASH_CONSTANT_LOW:
+		FlashGlobalParams_ = false;
+		break;
+
+	case FLASH_OFF:
+	default:
+		FlashGlobalParams_ = false;
+		nMode = FLASH_OFF;
+		break;
+	}
+	CHECK_ERR(is_IO(hCam_, IS_IO_CMD_FLASH_SET_MODE, (void*)&nMode, sizeof(nMode)));
+	flashUpdateGlobalParams();
+}
+void Camera::flashUpdateGlobalParams()
+{
+	if(FlashGlobalParams_){
+		IO_FLASH_PARAMS params;
+		CHECK_ERR(is_IO(hCam_, IS_IO_CMD_FLASH_GET_GLOBAL_PARAMS,
+				(void*)&params, sizeof(params)));
+		CHECK_ERR(is_IO(hCam_, IS_IO_CMD_FLASH_APPLY_GLOBAL_PARAMS, NULL, 0));
+	}
 }
 
 bool Camera::forceTrigger()
@@ -416,7 +516,7 @@ void Camera::destroyMemoryPool()
 	NumBuffers_ = 0;
 }
 
-void Camera::startCaptureThread(camCaptureCB callback)
+void Camera::captureThread(camCaptureCB callback)
 {
 	Streaming_ = true;
 	void * imgMem;
@@ -449,11 +549,12 @@ void Camera::startCaptureThread(camCaptureCB callback)
 
 void Camera::startVideoCapture(camCaptureCB callback){
 	StreamCallback_ = callback;
-	VidThread_ = boost::thread(&Camera::startCaptureThread, this, callback);
+	VidThread_ = boost::thread(&Camera::captureThread, this, callback);
 }
 void Camera::stopVideoCapture(){
 	StopCapture_ = true;
 	if (VidThread_.joinable()){
+		forceTrigger();
 		VidThread_.join();
 	}
 }

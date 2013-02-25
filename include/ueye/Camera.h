@@ -66,6 +66,15 @@ namespace ueye{
 		TRIGGER_HI_LO_SYNC	= IS_SET_TRIGGER_HI_LO_SYNC,
 		TRIGGER_LO_HI_SYNC	= IS_SET_TRIGGER_LO_HI_SYNC,
 	};
+	enum FlashMode{
+		FLASH_OFF				= IO_FLASH_MODE_OFF,
+		FLASH_TRIGGER_ACTIVE_LO	= IO_FLASH_MODE_TRIGGER_LO_ACTIVE,
+		FLASH_TRIGGER_ACTIVE_HI	= IO_FLASH_MODE_TRIGGER_HI_ACTIVE,
+		FLASH_CONSTANT_HIGH		= IO_FLASH_MODE_CONSTANT_HIGH,
+		FLASH_CONSTANT_LOW		= IO_FLASH_MODE_CONSTANT_LOW,
+		FLASH_FREERUN_ACTIVE_LO	= IO_FLASH_MODE_FREERUN_LO_ACTIVE,
+		FLASH_FREERUN_ACTIVE_HI = IO_FLASH_MODE_FREERUN_HI_ACTIVE,
+	};
 
 	class Camera
 	{
@@ -90,8 +99,12 @@ namespace ueye{
 		int getHeight();
 		int getZoom();
 		bool getAutoExposure();
+		double getExposure();
 		bool getHardwareGamma();
 		int getPixelClock();
+		bool getGainBoost();
+		bool getAutoGain();
+		unsigned int getHardwareGain();
 		TriggerMode getTriggerMode();
 		TriggerMode getSupportedTriggers();
 
@@ -103,7 +116,11 @@ namespace ueye{
 		void setZoom(int *zoom);
 		void setPixelClock(int *MHz);
 		void setFrameRate(double *rate);
+		void setGainBoost(bool *Enable);
+		void setAutoGain(bool *Enable);
+		void setHardwareGain(int *gain);
 		bool setTriggerMode(TriggerMode mode);
+		void setFlashWithGlobalParams(FlashMode mode);
 
 		bool forceTrigger();
 
@@ -118,22 +135,27 @@ namespace ueye{
 		void InitPrivateVariables();
 		int getSubsampleParam(int *scale);
 		int getBinningParam(int *scale);
+		void flashUpdateGlobalParams();
 
 		char **imgMem_;
 		int  *imgMemId_;
 		int NumBuffers_;
 		void initMemoryPool(int size);
 		void destroyMemoryPool();
-		void startCaptureThread(camCaptureCB captureCallback);
+		void captureThread(camCaptureCB captureCallback);
 		void restartVideoCapture();
 
 		uEyeColor ColorMode_;
 		bool AutoExposure_;
 		double ExposureTime_;
 		bool HardwareGamma_;
+		bool GainBoost_;
 		int Zoom_;
 		int PixelClock_;
+		bool AutoGain_;
+		int HardwareGain_;
 		double FrameRate_;
+		bool FlashGlobalParams_;
 		HIDS hCam_;
 		SENSORINFO camInfo_;
 		unsigned int serialNo_;
