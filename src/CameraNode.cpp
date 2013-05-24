@@ -236,6 +236,7 @@ bool CameraNode::setCameraInfo(sensor_msgs::SetCameraInfo::Request& req, sensor_
 {
 	ROS_INFO("New camera info received");
 	sensor_msgs::CameraInfo &info = req.camera_info;
+	info.header.frame_id = msg_camera_info_.header.frame_id;
 
 	// Sanity check: the image dimensions should match the resolution of the sensor.
 	unsigned int height = cam_.getHeight();
