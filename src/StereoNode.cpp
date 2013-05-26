@@ -83,41 +83,42 @@ StereoNode::StereoNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	int id = 0;
 	if(priv_nh.getParam("lSerialNo", id)){
 		if(!l_cam_.openCameraSerNo(id)){
-			ROS_ERROR("Failed to open uEye camera with serialNo: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with serialNo: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}else if(priv_nh.getParam("lDeviceId", id)){
 		if(!l_cam_.openCameraDevId(id)){
-			ROS_ERROR("Failed to open uEye camera with deviceId: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with deviceId: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}else{
 		priv_nh.getParam("lCameraId", id);
 		if(!l_cam_.openCameraCamId(id)){
-			ROS_ERROR("Failed to open uEye camera with cameraId: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with cameraId: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}
 	ROS_INFO("Left  camera: %s %u", l_cam_.getCameraName(), l_cam_.getCameraSerialNo());
+	id = 0;
 	if(priv_nh.getParam("rSerialNo", id)){
 		if(!r_cam_.openCameraSerNo(id)){
-			ROS_ERROR("Failed to open uEye camera with serialNo: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with serialNo: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}else if(priv_nh.getParam("rDeviceId", id)){
 		if(!r_cam_.openCameraDevId(id)){
-			ROS_ERROR("Failed to open uEye camera with deviceId: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with deviceId: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}else{
 		priv_nh.getParam("rCameraId", id);
 		if(!r_cam_.openCameraCamId(id)){
-			ROS_ERROR("Failed to open uEye camera with cameraId: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with cameraId: %u.", id);
 			ros::shutdown();
 			return;
 		}

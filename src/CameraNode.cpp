@@ -79,20 +79,20 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	int id = 0;
 	if(priv_nh.getParam("serialNo", id)){
 		if(!cam_.openCameraSerNo(id)){
-			ROS_ERROR("Failed to open uEye camera with serialNo: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with serialNo: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}else if(priv_nh.getParam("deviceId", id)){
 		if(!cam_.openCameraDevId(id)){
-			ROS_ERROR("Failed to open uEye camera with deviceId: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with deviceId: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}else{
 		priv_nh.getParam("cameraId", id);
 		if(!cam_.openCameraCamId(id)){
-			ROS_ERROR("Failed to open uEye camera with cameraId: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with cameraId: %u.", id);
 			ros::shutdown();
 			return;
 		}
