@@ -79,6 +79,7 @@ private:
 	void publishImage(IplImage * frame);
 	void startCamera();
 	void stopCamera();
+	void closeCamera();
 	void handlePath(std::string &path);
 
 	dynamic_reconfigure::Server<monoConfig> srv_;

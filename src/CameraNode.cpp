@@ -115,7 +115,7 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 
 CameraNode::~CameraNode()
 {
-	stopCamera();
+	closeCamera();
 }
 
 void CameraNode::handlePath(std::string &path)
@@ -346,6 +346,11 @@ void CameraNode::stopCamera()
 	cam_.stopVideoCapture();
 	ROS_INFO("Stopped video stream.");
 	running_ = false;
+}
+
+void CameraNode::closeCamera(){
+	stopCamera();
+	cam_.closeCamera();
 }
 
 } // namespace ueye

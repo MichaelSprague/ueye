@@ -86,6 +86,7 @@ private:
 	void publishImageR(IplImage * frame);
 	void startCamera();
 	void stopCamera();
+	void closeCamera();
 	void handlePath(std::string &path);
 
 	dynamic_reconfigure::Server<stereoConfig> srv_;

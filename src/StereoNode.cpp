@@ -138,7 +138,7 @@ StereoNode::StereoNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 
 StereoNode::~StereoNode()
 {
-	stopCamera();
+	closeCamera();
 }
 
 void StereoNode::handlePath(std::string &path)
@@ -183,7 +183,14 @@ void StereoNode::reconfigCam(stereoConfig &config, uint32_t level, Camera &cam)
 	}
 
 	// Frame Rate
-	cam.setFrameRate(&config.frame_rate);
+	if(config.trigger == stereo_TGR_SOFTWARE){
+		//In software trigger mode we don't want to set a frame rate
+		double d = 2.0;
+		cam.setFrameRate(&d);
+	}else{
+		cam.setFrameRate(&config.frame_rate);
+		ROS_INFO("config.trigger %d", config.trigger);
+	}
 
 	// Exposure
 	if (cam.getAutoExposure() != config.auto_exposure){
@@ -196,7 +203,6 @@ void StereoNode::reconfigCam(stereoConfig &config, uint32_t level, Camera &cam)
 void StereoNode::reconfig(stereoConfig &config, uint32_t level)
 {
 	force_streaming_ = config.force_streaming;
-
 	handlePath(config.config_path);
 
 	if(trigger_mode_ != config.trigger){
@@ -475,6 +481,12 @@ void StereoNode::stopCamera()
 	r_cam_.stopVideoCapture();
 	ROS_INFO("Stopped video stream.");
 	running_ = false;
+}
+
+void StereoNode::closeCamera(){
+	stopCamera();
+	r_cam_.closeCamera();
+	l_cam_.closeCamera();
 }
 
 } // namespace ueye
