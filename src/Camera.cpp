@@ -341,6 +341,8 @@ void Camera::setPixelClock(int *MHz)
 
 	CHECK_ERR(is_PixelClock(hCam_, IS_PIXELCLOCK_CMD_SET, MHz, sizeof(int)));
 	setFrameRate(&FrameRate_);
+
+	PixelClock_ = *MHz;
 }
 void Camera::setFrameRate(double *rate)
 {
@@ -418,6 +420,26 @@ void Camera::setFlashWithGlobalParams(FlashMode mode)
 	CHECK_ERR(is_IO(hCam_, IS_IO_CMD_FLASH_SET_MODE, (void*)&nMode, sizeof(nMode)));
 	flashUpdateGlobalParams();
 }
+void Camera::setFlash(FlashMode mode, int delay_usec, unsigned int duration_usec)
+{
+	IO_FLASH_PARAMS params;
+	memset(&params, 0, sizeof(params));
+	params.s32Delay = delay_usec;
+	params.u32Duration = duration_usec;
+
+	int num_mode = int(mode);
+
+	CHECK_ERR(is_IO(hCam_, IS_IO_CMD_FLASH_SET_MODE, (void*)&num_mode, sizeof(num_mode)));
+	CHECK_ERR(is_IO(hCam_, IS_IO_CMD_FLASH_SET_PARAMS, &params, sizeof(params)));
+
+	FlashGlobalParams_ = false;
+}
+void Camera::setFlash(FlashMode mode)
+{
+	// If flash delay = 0 and flash duration = 0, the flash signal is
+	// automatically synchronized to the exposure time.
+	setFlash(mode, 0, 0);
+}
 void Camera::flashUpdateGlobalParams()
 {
 	if(FlashGlobalParams_){
@@ -426,6 +448,10 @@ void Camera::flashUpdateGlobalParams()
 				(void*)&params, sizeof(params)));
 		CHECK_ERR(is_IO(hCam_, IS_IO_CMD_FLASH_APPLY_GLOBAL_PARAMS, NULL, 0));
 	}
+}
+void Camera::setTriggerDelay(int delay_usec)
+{
+	CHECK_ERR(is_SetTriggerDelay(hCam_, delay_usec));
 }
 
 bool Camera::forceTrigger()

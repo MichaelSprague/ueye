@@ -121,6 +121,9 @@ namespace ueye{
 		void setHardwareGain(int *gain);
 		bool setTriggerMode(TriggerMode mode);
 		void setFlashWithGlobalParams(FlashMode mode);
+		void setFlash(FlashMode mode, int delay_usec, unsigned int duration_usec);
+		void setFlash(FlashMode mode);
+		void setTriggerDelay(int delay_usec);
 
 		bool forceTrigger();
 

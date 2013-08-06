@@ -125,6 +125,10 @@ StereoNode::StereoNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	}
 	ROS_INFO("Right camera: %s %u", r_cam_.getCameraName(), r_cam_.getCameraSerialNo());
 
+	// Disable trigger delays
+	l_cam_.setTriggerDelay(0);
+	r_cam_.setTriggerDelay(0);
+
 	timer_force_trigger_ = node.createTimer(ros::Duration(1.0), &StereoNode::timerForceTrigger, this);
 	timer_force_trigger_.stop();
 
@@ -205,6 +209,8 @@ void StereoNode::reconfig(stereoConfig &config, uint32_t level)
 	force_streaming_ = config.force_streaming;
 	handlePath(config.config_path);
 
+	const FlashMode flash_active_mode = config.flash_polarity ? FLASH_FREERUN_ACTIVE_HI : FLASH_FREERUN_ACTIVE_LO;
+
 	if(trigger_mode_ != config.trigger){
 		stopCamera();
 		TriggerMode l_trigger, r_trigger;
@@ -221,22 +227,22 @@ void StereoNode::reconfig(stereoConfig &config, uint32_t level)
 		case stereo_TGR_L_MASTER_R_RISING:
 			l_trigger = TRIGGER_OFF;
 			r_trigger = TRIGGER_LO_HI;
-			l_flash = FLASH_FREERUN_ACTIVE_LO;
+			l_flash = flash_active_mode;
 			break;
 		case stereo_TGR_L_MASTER_R_FALLING:
 			l_trigger = TRIGGER_OFF;
 			r_trigger = TRIGGER_HI_LO;
-			l_flash = FLASH_FREERUN_ACTIVE_LO;
+			l_flash = flash_active_mode;
 			break;
 		case stereo_TGR_R_MASTER_L_RISING:
 			l_trigger = TRIGGER_LO_HI;
 			r_trigger = TRIGGER_OFF;
-			r_flash = FLASH_FREERUN_ACTIVE_LO;
+			r_flash = flash_active_mode;
 			break;
 		case stereo_TGR_R_MASTER_L_FALLING:
 			l_trigger = TRIGGER_HI_LO;
 			r_trigger = TRIGGER_OFF;
-			r_flash = FLASH_FREERUN_ACTIVE_LO;
+			r_flash = flash_active_mode;
 			break;
 		case stereo_TGR_AUTO:
 		default:
@@ -245,27 +251,16 @@ void StereoNode::reconfig(stereoConfig &config, uint32_t level)
 			break;
 		}
 		if(!(l_cam_.setTriggerMode(l_trigger) && r_cam_.setTriggerMode(r_trigger))){
+			ROS_ERROR("Failed to configure triggers");
 			l_cam_.setTriggerMode(TRIGGER_OFF);
 			r_cam_.setTriggerMode(TRIGGER_OFF);
 			config.trigger = stereo_TGR_AUTO;
-			l_cam_.setFlashWithGlobalParams(FLASH_OFF);
-			r_cam_.setFlashWithGlobalParams(FLASH_OFF);
+			l_cam_.setFlash(FLASH_OFF);
+			r_cam_.setFlash(FLASH_OFF);
 		}else{
-			l_cam_.setFlashWithGlobalParams(l_flash);
-			r_cam_.setFlashWithGlobalParams(r_flash);
+			l_cam_.setFlash(l_flash, config.flash_delay, config.flash_duration);
+			r_cam_.setFlash(r_flash, config.flash_delay, config.flash_duration);
 		}
-	}
-
-	// Handle Auto-Exposure
-	switch(config.trigger){
-	case stereo_TGR_L_MASTER_R_RISING:
-	case stereo_TGR_L_MASTER_R_FALLING:
-	case stereo_TGR_R_MASTER_L_RISING:
-	case stereo_TGR_R_MASTER_L_FALLING:
-		config.auto_exposure = false;
-		break;
-	default:
-		break;
 	}
 
 	// Latch Auto Parameters
