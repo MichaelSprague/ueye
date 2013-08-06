@@ -422,15 +422,20 @@ void Camera::setFlashWithGlobalParams(FlashMode mode)
 }
 void Camera::setFlash(FlashMode mode, int delay_usec, unsigned int duration_usec)
 {
-	IO_FLASH_PARAMS params;
-	memset(&params, 0, sizeof(params));
-	params.s32Delay = delay_usec;
-	params.u32Duration = duration_usec;
-
 	int num_mode = int(mode);
 
 	CHECK_ERR(is_IO(hCam_, IS_IO_CMD_FLASH_SET_MODE, (void*)&num_mode, sizeof(num_mode)));
-	CHECK_ERR(is_IO(hCam_, IS_IO_CMD_FLASH_SET_PARAMS, &params, sizeof(params)));
+
+	if (mode != FLASH_OFF)
+	{
+		IO_FLASH_PARAMS params;
+		memset(&params, 0, sizeof(params));
+
+		params.s32Delay = delay_usec;
+		params.u32Duration = duration_usec;
+
+		CHECK_ERR(is_IO(hCam_, IS_IO_CMD_FLASH_SET_PARAMS, &params, sizeof(params)));
+	}
 
 	FlashGlobalParams_ = false;
 }
