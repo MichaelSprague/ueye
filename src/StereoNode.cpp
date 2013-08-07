@@ -42,6 +42,8 @@ StereoNode::StereoNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	running_ = false;
 	configured_ = false;
 	force_streaming_ = false;
+	auto_exposure_ = false;
+	auto_gain_ = false;
 	trigger_mode_ = zoom_ = -1;
 	l_stamp_ = r_stamp_ = ros::Time(0);
 
@@ -81,41 +83,42 @@ StereoNode::StereoNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	int id = 0;
 	if(priv_nh.getParam("lSerialNo", id)){
 		if(!l_cam_.openCameraSerNo(id)){
-			ROS_ERROR("Failed to open uEye camera with serialNo: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with serialNo: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}else if(priv_nh.getParam("lDeviceId", id)){
 		if(!l_cam_.openCameraDevId(id)){
-			ROS_ERROR("Failed to open uEye camera with deviceId: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with deviceId: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}else{
 		priv_nh.getParam("lCameraId", id);
 		if(!l_cam_.openCameraCamId(id)){
-			ROS_ERROR("Failed to open uEye camera with cameraId: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with cameraId: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}
 	ROS_INFO("Left  camera: %s %u", l_cam_.getCameraName(), l_cam_.getCameraSerialNo());
+	id = 0;
 	if(priv_nh.getParam("rSerialNo", id)){
 		if(!r_cam_.openCameraSerNo(id)){
-			ROS_ERROR("Failed to open uEye camera with serialNo: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with serialNo: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}else if(priv_nh.getParam("rDeviceId", id)){
 		if(!r_cam_.openCameraDevId(id)){
-			ROS_ERROR("Failed to open uEye camera with deviceId: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with deviceId: %u.", id);
 			ros::shutdown();
 			return;
 		}
 	}else{
 		priv_nh.getParam("rCameraId", id);
 		if(!r_cam_.openCameraCamId(id)){
-			ROS_ERROR("Failed to open uEye camera with cameraId: %d.", id);
+			ROS_ERROR("Failed to open uEye camera with cameraId: %u.", id);
 			ros::shutdown();
 			return;
 		}
@@ -126,16 +129,16 @@ StereoNode::StereoNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
 	timer_force_trigger_.stop();
 
 	// Setup Dynamic Reconfigure
-	dynamic_reconfigure::Server<cameraConfig>::CallbackType f = boost::bind(&StereoNode::reconfig, this, _1, _2);
+	dynamic_reconfigure::Server<stereoConfig>::CallbackType f = boost::bind(&StereoNode::reconfig, this, _1, _2);
 	srv_.setCallback(f);	//start dynamic reconfigure
 
 	// Set up Timer
-	timer_ = node.createTimer(ros::Duration(1/5.0), &StereoNode::timerCallback, this);
+	timer_ = node.createTimer(ros::Duration(0.5), &StereoNode::timerCallback, this);
 }
 
 StereoNode::~StereoNode()
 {
-	stopCamera();
+	closeCamera();
 }
 
 void StereoNode::handlePath(std::string &path)
@@ -154,50 +157,40 @@ void StereoNode::handlePath(std::string &path)
 	}
 	config_path_ = path;
 }
-void StereoNode::reconfigCam(cameraConfig &config, uint32_t level, Camera &cam)
+void StereoNode::reconfigCam(stereoConfig &config, uint32_t level, Camera &cam)
 {
-	// Trigger
-	if (trigger_mode_ != config.trigger){
-//		stopCamera();
-		TriggerMode mode;
-		switch(config.trigger){
-		case 1:	// Software
-		case 2:
-			mode = TRIGGER_LO_HI;
-			break;
-		case 3:
-			mode = TRIGGER_HI_LO;
-			break;
-		case 0:
-		default:
-			mode = TRIGGER_OFF;
-			break;
-		}
-		if(!cam.setTriggerMode(mode)){
-			cam.setTriggerMode(TRIGGER_OFF);
-			config.trigger = 0;
-		}
-	}
-
 	// Hardware Gamma Correction
 	if (cam.getHardwareGamma() != config.hardware_gamma){
 		cam.setHardwareGamma(&config.hardware_gamma);
 	}
 
+	// Gain Boost
+	if (cam.getGainBoost() != config.gain_boost){
+		cam.setGainBoost(&config.gain_boost);
+	}
+
+	// Hardware Gain
+	if (cam.getAutoGain() != config.auto_gain){
+		cam.setAutoGain(&config.auto_gain);
+	}
+	if (!config.auto_gain){
+		cam.setHardwareGain(&config.gain);
+	}
+
 	// Zoom
 	if (cam.getZoom() != config.zoom){
-//		stopCamera();
 		cam.setZoom(&config.zoom);
 	}
 
-	// Pixel Clock
-	if (cam.getPixelClock() != config.pixel_clock){
-//		stopCamera();
-		cam.setPixelClock(&config.pixel_clock);
-	}
-
 	// Frame Rate
-	cam.setFrameRate(&config.frame_rate);
+	if(config.trigger == stereo_TGR_SOFTWARE){
+		//In software trigger mode we don't want to set a frame rate
+		double d = 2.0;
+		cam.setFrameRate(&d);
+	}else{
+		cam.setFrameRate(&config.frame_rate);
+		ROS_INFO("config.trigger %d", config.trigger);
+	}
 
 	// Exposure
 	if (cam.getAutoExposure() != config.auto_exposure){
@@ -207,19 +200,97 @@ void StereoNode::reconfigCam(cameraConfig &config, uint32_t level, Camera &cam)
 		cam.setExposure(&config.exposure_time);
 	}
 }
-void StereoNode::reconfig(cameraConfig &config, uint32_t level)
+void StereoNode::reconfig(stereoConfig &config, uint32_t level)
 {
-	stopCamera();
 	force_streaming_ = config.force_streaming;
-
 	handlePath(config.config_path);
+
+	if(trigger_mode_ != config.trigger){
+		stopCamera();
+		TriggerMode l_trigger, r_trigger;
+		FlashMode l_flash = FLASH_OFF;
+		FlashMode r_flash = FLASH_OFF;
+		switch(config.trigger){
+		case stereo_TGR_SOFTWARE:
+		case stereo_TGR_HARDWARE_RISING:
+			l_trigger = r_trigger = TRIGGER_LO_HI;
+			break;
+		case stereo_TGR_HARDWARE_FALLING:
+			l_trigger = r_trigger = TRIGGER_HI_LO;
+			break;
+		case stereo_TGR_L_MASTER_R_RISING:
+			l_trigger = TRIGGER_OFF;
+			r_trigger = TRIGGER_LO_HI;
+			l_flash = FLASH_FREERUN_ACTIVE_LO;
+			break;
+		case stereo_TGR_L_MASTER_R_FALLING:
+			l_trigger = TRIGGER_OFF;
+			r_trigger = TRIGGER_HI_LO;
+			l_flash = FLASH_FREERUN_ACTIVE_LO;
+			break;
+		case stereo_TGR_R_MASTER_L_RISING:
+			l_trigger = TRIGGER_LO_HI;
+			r_trigger = TRIGGER_OFF;
+			r_flash = FLASH_FREERUN_ACTIVE_LO;
+			break;
+		case stereo_TGR_R_MASTER_L_FALLING:
+			l_trigger = TRIGGER_HI_LO;
+			r_trigger = TRIGGER_OFF;
+			r_flash = FLASH_FREERUN_ACTIVE_LO;
+			break;
+		case stereo_TGR_AUTO:
+		default:
+			config.trigger = stereo_TGR_AUTO;
+			l_trigger = r_trigger = TRIGGER_OFF;
+			break;
+		}
+		if(!(l_cam_.setTriggerMode(l_trigger) && r_cam_.setTriggerMode(r_trigger))){
+			l_cam_.setTriggerMode(TRIGGER_OFF);
+			r_cam_.setTriggerMode(TRIGGER_OFF);
+			config.trigger = stereo_TGR_AUTO;
+			l_cam_.setFlashWithGlobalParams(FLASH_OFF);
+			r_cam_.setFlashWithGlobalParams(FLASH_OFF);
+		}else{
+			l_cam_.setFlashWithGlobalParams(l_flash);
+			r_cam_.setFlashWithGlobalParams(r_flash);
+		}
+	}
+
+	// Handle Auto-Exposure
+	switch(config.trigger){
+	case stereo_TGR_L_MASTER_R_RISING:
+	case stereo_TGR_L_MASTER_R_FALLING:
+	case stereo_TGR_R_MASTER_L_RISING:
+	case stereo_TGR_R_MASTER_L_FALLING:
+		config.auto_exposure = false;
+		break;
+	default:
+		break;
+	}
+
+	// Latch Auto Parameters
+	if(auto_gain_ && !config.auto_gain){
+		config.gain = l_cam_.getHardwareGain();
+	}
+	auto_gain_ = config.auto_gain;
+	if(auto_exposure_ && !config.auto_exposure){
+		config.exposure_time = l_cam_.getExposure();
+	}
+	auto_exposure_ = config.auto_exposure;
+
+	// Pixel Clock
+	if (l_cam_.getPixelClock() != config.l_pixel_clock){
+		l_cam_.setPixelClock(&config.l_pixel_clock);
+	}
+	if (r_cam_.getPixelClock() != config.r_pixel_clock){
+		r_cam_.setPixelClock(&config.r_pixel_clock);
+	}
 
 	reconfigCam(config, level, l_cam_);
 	reconfigCam(config, level, r_cam_);
 
 	trigger_mode_ = config.trigger;
-	if(trigger_mode_ == 1){
-//		stopCamera();
+	if(trigger_mode_ == stereo_TGR_SOFTWARE){
 		timer_force_trigger_.setPeriod(ros::Duration(1/config.frame_rate));
 	}
 
@@ -228,6 +299,7 @@ void StereoNode::reconfig(cameraConfig &config, uint32_t level)
 		loadIntrinsics(l_cam_, l_msg_camera_info_);
 		loadIntrinsics(r_cam_, r_msg_camera_info_);
 	}
+
 	l_msg_camera_info_.header.frame_id = r_msg_camera_info_.header.frame_id =
 			config.frame_id;
 	configured_ = true;
@@ -246,7 +318,7 @@ void StereoNode::timerCallback(const ros::TimerEvent& event)
 }
 void StereoNode::timerForceTrigger(const ros::TimerEvent& event)
 {
-	if(trigger_mode_ == 1){
+	if(trigger_mode_ == stereo_TGR_SOFTWARE){
 		bool success = true;
 		success &= l_cam_.forceTrigger();
 		success &= r_cam_.forceTrigger();
@@ -265,6 +337,7 @@ bool StereoNode::setCameraInfo(sensor_msgs::SetCameraInfo::Request& req, sensor_
 {
 	ROS_INFO("New camera info received");
 	sensor_msgs::CameraInfo &info = req.camera_info;
+	info.header.frame_id = msg_info.header.frame_id;
 
 	// Sanity check: the image dimensions should match the resolution of the sensor.
 	unsigned int height = cam.getHeight();
@@ -403,10 +476,17 @@ void StereoNode::stopCamera()
 	timer_force_trigger_.stop();
 	if(!running_)
 		return;
+	ROS_INFO("Stopping video stream.");
 	l_cam_.stopVideoCapture();
 	r_cam_.stopVideoCapture();
 	ROS_INFO("Stopped video stream.");
 	running_ = false;
+}
+
+void StereoNode::closeCamera(){
+	stopCamera();
+	r_cam_.closeCamera();
+	l_cam_.closeCamera();
 }
 
 } // namespace ueye
