@@ -105,12 +105,12 @@ Camera::Camera()
 
 bool Camera::checkVersion(int &Major, int &Minor, int &Build, char *&Expected)
 {
-	Expected = (char*)"4.20.6";
+	Expected = (char*)"4.30.17";
 	Build = is_GetDLLVersion();
 	Major = (Build >> 24) & 0x000000FF;
 	Minor = (Build >> 16) & 0x000000FF;
 	Build &= 0x0000FFFF;
-	if((Major == 4) && (Minor == 20) && (Build == 6)){
+	if((Major == 4) && (Minor == 30) && (Build == 17)){
 		return true;
 	}
 	return false;
