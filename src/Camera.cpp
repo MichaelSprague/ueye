@@ -135,7 +135,7 @@ unsigned int Camera::getSerialNumberList(vector<unsigned int>& SerNo, vector<uns
 			SerNo.resize(num);
 			DevId.resize(num);
 			for(int i=0; i<num; i++){
-				SerNo[i] = atoi(list->uci[i].SerNo);
+				SerNo[i] = atoll(list->uci[i].SerNo);
 				DevId[i] = list->uci[i].dwDeviceID;
 			}
 		}else{
@@ -159,7 +159,7 @@ bool Camera::openCameraCamId(unsigned int id)
 	CHECK_ERR(is_GetSensorInfo(hCam_, &camInfo_));
 	CAMINFO info;
 	CHECK_ERR(is_GetCameraInfo(hCam_, &info));
-	serialNo_ = atoi(info.SerNo);
+	serialNo_ = atoll(info.SerNo);
 
 	setColorMode(ColorMode_);
 	setAutoExposure(&AutoExposure_);
