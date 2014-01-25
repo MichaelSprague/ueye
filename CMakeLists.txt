@@ -1,48 +1,66 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(ueye)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+set(${PROJECT_NAME}_CATKIN_DEPS
+  roscpp
+  nodelet
+  dynamic_reconfigure
+  std_msgs
+  image_transport
+  camera_calibration_parsers
+  cv_bridge
+)
 
-rosbuild_init()
+find_package(catkin REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_DEPS})
+find_package(OpenCV REQUIRED)
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+set(${PROJECT_NAME}_INCLUDE_EXPORTS
+  ${OpenCV_INCLUDE_DIRS}
+  include
+)
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
+generate_dynamic_reconfigure_options(cfg/mono.cfg cfg/stereo.cfg)
 
-rosbuild_find_ros_package(dynamic_reconfigure)
-include(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
-gencfg()
+catkin_package(
+  INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_EXPORTS}
+  LIBRARIES ueye_nodelets
+  CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPS}
+  DEPENDS OpenCV
+)
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_executable(camera src/camera_node.cpp src/CameraNode.cpp src/Camera.cpp)
-target_link_libraries(camera ueye_api )
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+  ${${PROJECT_NAME}_INCLUDE_EXPORTS}
+)
 
-rosbuild_add_executable(stereo src/stereo_node.cpp src/StereoNode.cpp src/CameraNode.cpp src/Camera.cpp)
-target_link_libraries(stereo ueye_api )
+add_library(ueye_nodelets
+  src/Camera.cpp
+  src/camera_nodelet.cpp src/CameraNode.cpp
+  src/stereo_nodelet.cpp src/StereoNode.cpp
+  src/framerate_nodelet.cpp src/FramerateNode.cpp
+)
+target_link_libraries(ueye_nodelets
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+  ueye_api
+)
 
-rosbuild_add_executable(framerate src/framerate_node.cpp src/FramerateNode.cpp)
+add_executable(camera src/camera_node.cpp)
+add_dependencies(camera ${PROJECT_NAME}_gencfg)
+target_link_libraries(camera
+  ueye_nodelets
+)
 
-rosbuild_add_library(ueye_nodelets
-		src/camera_nodelet.cpp src/CameraNode.cpp src/Camera.cpp
-		src/stereo_nodelet.cpp src/StereoNode.cpp
-		src/framerate_nodelet.cpp src/FramerateNode.cpp)
-target_link_libraries(ueye_nodelets ueye_api )
+add_executable(stereo src/stereo_node.cpp)
+add_dependencies(stereo ${PROJECT_NAME}_gencfg)
+target_link_libraries(stereo
+  ueye_nodelets
+)
+
+add_executable(framerate src/framerate_node.cpp)
+add_dependencies(framerate ${PROJECT_NAME}_gencfg)
+target_link_libraries(framerate
+  ueye_nodelets
+)
+
