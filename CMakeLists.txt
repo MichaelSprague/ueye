@@ -40,6 +40,7 @@ add_library(ueye_nodelets
   src/stereo_nodelet.cpp src/StereoNode.cpp
   src/framerate_nodelet.cpp src/FramerateNode.cpp
 )
+add_dependencies(ueye_nodelets ${PROJECT_NAME}_gencfg)
 target_link_libraries(ueye_nodelets
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
@@ -47,19 +48,16 @@ target_link_libraries(ueye_nodelets
 )
 
 add_executable(camera src/camera_node.cpp)
-add_dependencies(camera ${PROJECT_NAME}_gencfg)
 target_link_libraries(camera
   ueye_nodelets
 )
 
 add_executable(stereo src/stereo_node.cpp)
-add_dependencies(stereo ${PROJECT_NAME}_gencfg)
 target_link_libraries(stereo
   ueye_nodelets
 )
 
 add_executable(framerate src/framerate_node.cpp)
-add_dependencies(framerate ${PROJECT_NAME}_gencfg)
 target_link_libraries(framerate
   ueye_nodelets
 )
