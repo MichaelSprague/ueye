@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ueye)
 
+# set default build type
+IF(NOT CMAKE_BUILD_TYPE)
+  SET(CMAKE_BUILD_TYPE Release)
+ENDIF(NOT CMAKE_BUILD_TYPE)
+
 set(${PROJECT_NAME}_CATKIN_DEPS
   roscpp
   nodelet
@@ -27,7 +32,6 @@ catkin_package(
   CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPS}
   DEPENDS OpenCV
 )
-
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
