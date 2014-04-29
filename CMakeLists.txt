@@ -66,3 +66,7 @@ target_link_libraries(framerate
   ueye_nodelets
 )
 
+install(TARGETS ueye_nodelets camera stereo framerate
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
