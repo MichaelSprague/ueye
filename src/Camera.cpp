@@ -34,6 +34,8 @@
 
 #include "ueye/Camera.h"
 
+#include <ros/time.h>  // only used for ros::Duration::sleep()
+
 using namespace std;
 
 #define DEBUG_ERROR_CHECKS 0
@@ -557,7 +559,22 @@ void Camera::captureThread(camCaptureCB callback)
 
 	// Setup video event
 	CHECK_ERR(is_EnableEvent(hCam_, IS_SET_EVENT_FRAME));
-	CHECK_ERR(is_CaptureVideo(hCam_, IS_WAIT));
+
+	// There is a weird condition with the ueye 4.30 where
+	// this never returns when using IS_WAIT.
+	// We are using IS_DONT_WAIT and retry every 0.1s for 2s instead
+	bool capture = false;
+	for (int i = 0; i < 20; ++i){
+		if (is_CaptureVideo(hCam_, IS_DONT_WAIT) == IS_SUCCESS){
+			capture = true;
+			break;
+		}
+		ros::Duration(0.1).sleep();
+	}
+	if (!capture){
+		throw uEyeException(-1, "Capture could not be started.");
+	}
+
 	IplImage * p_img = cvCreateImageHeader(cvSize(getWidth(),getHeight()), IPL_DEPTH_8U, 3);
 
 	while(!StopCapture_){
