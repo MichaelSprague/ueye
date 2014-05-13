@@ -100,7 +100,9 @@ void Camera::InitPrivateVariables()
 	StreamCallback_ = NULL;
 }
 
-Camera::Camera()
+Camera::Camera():
+  imgMem_(NULL),
+  imgMemId_(NULL)
 {
 	InitPrivateVariables();
 }
