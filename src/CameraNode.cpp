@@ -43,7 +43,7 @@ const std::string configFileName(Camera &cam){
 }
 
 CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
-: it_(node), srv_(priv_nh)
+: srv_(priv_nh), it_(node)
 {
 	running_ = false;
 	configured_ = false;
