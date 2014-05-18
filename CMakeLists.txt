@@ -20,7 +20,6 @@ find_package(catkin REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_DEPS})
 find_package(OpenCV REQUIRED)
 
 set(${PROJECT_NAME}_INCLUDE_EXPORTS
-  ${OpenCV_INCLUDE_DIRS}
   include
 )
 
@@ -34,6 +33,7 @@ catkin_package(
 )
 
 include_directories(
+  ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${${PROJECT_NAME}_INCLUDE_EXPORTS}
 )
@@ -69,4 +69,12 @@ target_link_libraries(framerate
 install(TARGETS ueye_nodelets camera stereo framerate
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(FILES nodelets.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
