@@ -295,8 +295,8 @@ void StereoNode::reconfig(stereoConfig &config, uint32_t level)
 		loadIntrinsics(r_cam_, r_msg_camera_info_);
 	}
 
-	l_msg_camera_info_.header.frame_id = r_msg_camera_info_.header.frame_id =
-			config.frame_id;
+	l_msg_camera_info_.header.frame_id = config.l_frame_id;
+	r_msg_camera_info_.header.frame_id = config.r_frame_id;
 	configured_ = true;
 }
 
