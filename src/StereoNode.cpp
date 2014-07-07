@@ -163,6 +163,27 @@ void StereoNode::handlePath(std::string &path)
 }
 void StereoNode::reconfigCam(stereoConfig &config, uint32_t level, Camera &cam)
 {
+	// Color Mode
+	uEyeColor color;
+	switch (config.color) {
+	default:
+	case mono_COLOR_MONO8: color = MONO8; break;
+	case mono_COLOR_MONO16: color = MONO16; break;
+	case mono_COLOR_YUV: color = YUV; break;
+	case mono_COLOR_YCbCr: color = YCbCr; break;
+	case mono_COLOR_BGR5: color = BGR5; break;
+	case mono_COLOR_BGR565: color = BGR565; break;
+	case mono_COLOR_BGR8: color = BGR8; break;
+	case mono_COLOR_BGRA8: color = BGRA8; break;
+	case mono_COLOR_BGRY8: color = BGRY8; break;
+	case mono_COLOR_RGB8: color = RGB8; break;
+	case mono_COLOR_RGBA8: color = RGBA8; break;
+	case mono_COLOR_RGBY8: color = RGBY8; break;
+	}
+	if (cam.getColorMode() != color){
+		cam.setColorMode(color);
+	}
+
 	// Hardware Gamma Correction
 	if (cam.getHardwareGamma() != config.hardware_gamma){
 		cam.setHardwareGamma(&config.hardware_gamma);
@@ -420,7 +441,7 @@ sensor_msgs::ImagePtr StereoNode::processFrame(IplImage* frame, Camera &cam, cv_
 	info = msg;
 
 	converter.header = msg_info.header;
-	converter.encoding = "bgr8";
+	converter.encoding = Camera::colorModeToString(cam.getColorMode());
 	converter.image = frame;
 	return converter.toImageMsg();
 }

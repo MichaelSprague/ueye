@@ -53,8 +53,18 @@ namespace ueye{
 	};
 
 	enum uEyeColor{
-		RGB		= IS_CM_BGR8_PACKED,
-		YCbYCr	= IS_CM_CBYCRY_PACKED,
+		MONO8	= IS_CM_MONO8,
+		MONO16	= IS_CM_MONO16,
+		YUV		= IS_CM_UYVY_PACKED,
+		YCbCr	= IS_CM_CBYCRY_PACKED,
+		BGR5	= IS_CM_BGR5_PACKED,
+		BGR565	= IS_CM_BGR565_PACKED,
+		BGR8	= IS_CM_BGR8_PACKED,
+		BGRA8	= IS_CM_BGRA8_PACKED,
+		BGRY8	= IS_CM_BGRY8_PACKED,
+		RGB8	= IS_CM_RGB8_PACKED,
+		RGBA8	= IS_CM_RGBA8_PACKED,
+		RGBY8	= IS_CM_RGBY8_PACKED,
 	};
 	enum TriggerMode{
 		TRIGGER_OFF			= IS_SET_TRIGGER_OFF,
@@ -81,12 +91,14 @@ namespace ueye{
 		~Camera();
 
 		// Initialization functions in order they should be called.
-		bool checkVersion(int &Major, int &Minor, int &Build, char *&Expected);
+		static bool checkVersion(int &Major, int &Minor, int &Build, char *&Expected);
 		int getNumberOfCameras();
 		unsigned int getSerialNumberList(std::vector<unsigned int>& SerNo, std::vector<unsigned int>& DevId);
 		bool openCameraCamId(unsigned int id);
 		bool openCameraDevId(unsigned int id);
 		bool openCameraSerNo(unsigned int serial_number);
+
+		static const char* colorModeToString(uEyeColor mode);
 
 		// Get Properties
 		char * getCameraName();
@@ -96,6 +108,7 @@ namespace ueye{
 		int getWidth();
 		int getHeight();
 		int getZoom();
+		uEyeColor getColorMode();
 		bool getAutoExposure();
 		double getExposure();
 		bool getHardwareGamma();
