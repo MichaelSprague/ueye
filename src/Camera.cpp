@@ -92,13 +92,10 @@ void Camera::InitPrivateVariables()
 	serialNo_ = 0;
 	hCam_ = 0;
 	memset(&camInfo_, 0x00, sizeof(camInfo_));
-	NumBuffers_ = 0;
 	StreamCallback_ = NULL;
 }
 
-Camera::Camera():
-  imgMem_(NULL),
-  imgMemId_(NULL)
+Camera::Camera()
 {
 	InitPrivateVariables();
 }
@@ -526,8 +523,8 @@ void Camera::initMemoryPool(int size)
 	if(size < 2){
 		size = 2;
 	}
-	imgMem_ = new char* [size];
-	imgMemId_ = new int [size];
+	imgMem_.resize(size);
+	imgMemId_.resize(size);
 	for (int i = 0; i < size; i++){
 		if (IS_SUCCESS != is_AllocImageMem (hCam_, Width, Height, 24, &imgMem_[i], &imgMemId_[i])){
 			throw uEyeException(-1, "Failed to initialize memory.");
@@ -537,14 +534,14 @@ void Camera::initMemoryPool(int size)
 			throw uEyeException(-1, "Failed to initialize memory.");
 		}
 	}
-	NumBuffers_ = size;
 }
 void Camera::destroyMemoryPool()
 {
-	for (int i=0; i<NumBuffers_; i++){
+	for (int i=0; i<imgMem_.size(); i++){
 		CHECK_ERR(is_FreeImageMem(hCam_,  imgMem_[i], imgMemId_[i]));
 	}
-	NumBuffers_ = 0;
+	imgMem_.clear();
+	imgMemId_.clear();
 }
 
 void Camera::captureThread(camCaptureCB callback)
