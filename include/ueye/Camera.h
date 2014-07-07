@@ -96,9 +96,9 @@ public:
   ~Camera();
 
   // Initialization functions in order they should be called.
-  static bool checkVersion(int &Major, int &Minor, int &Build, char *&Expected);
-  int getNumberOfCameras();
-  unsigned int getSerialNumberList(std::vector<unsigned int>& SerNo, std::vector<unsigned int>& DevId);
+  static bool checkVersion(int &major, int &minor, int &build, char *&expected);
+  int getNumberOfCameras() const;
+  unsigned int getSerialNumberList(std::vector<unsigned int>& serial, std::vector<unsigned int>& dev_id);
   bool openCameraCamId(unsigned int id);
   bool openCameraDevId(unsigned int id);
   bool openCameraSerNo(unsigned int serial_number);
@@ -106,34 +106,34 @@ public:
   static const char* colorModeToString(uEyeColor mode);
 
   // Get Properties
-  char * getCameraName();
-  unsigned int getCameraSerialNo();
-  int getWidthMax();
-  int getHeightMax();
-  int getWidth();
-  int getHeight();
-  int getZoom();
-  uEyeColor getColorMode();
-  bool getAutoExposure();
-  double getExposure();
-  bool getHardwareGamma();
-  int getPixelClock();
-  bool getGainBoost();
-  bool getAutoGain();
+  const char * getCameraName() const;
+  unsigned int getCameraSerialNo() const;
+  int getWidthMax() const;
+  int getHeightMax() const;
+  int getWidth() const;
+  int getHeight() const;
+  int getZoom() const;
+  uEyeColor getColorMode() const;
+  bool getAutoExposure() const;
+  double getExposure() const;
+  bool getHardwareGamma() const;
+  int getPixelClock() const;
+  bool getGainBoost() const;
+  bool getAutoGain() const;
   unsigned int getHardwareGain();
-  TriggerMode getTriggerMode();
-  TriggerMode getSupportedTriggers();
+  TriggerMode getTriggerMode() const;
+  TriggerMode getSupportedTriggers() const;
 
   // Set Properties
   void setColorMode(uEyeColor mode);
-  void setAutoExposure(bool *Enable);
+  void setAutoExposure(bool *enable);
   void setExposure(double *time_ms);
-  void setHardwareGamma(bool *Enable);
+  void setHardwareGamma(bool *enable);
   void setZoom(int *zoom);
   void setPixelClock(int *MHz);
   void setFrameRate(double *rate);
-  void setGainBoost(bool *Enable);
-  void setAutoGain(bool *Enable);
+  void setGainBoost(bool *enable);
+  void setAutoGain(bool *enable);
   void setHardwareGain(int *gain);
   bool setTriggerMode(TriggerMode mode);
   void setFlashWithGlobalParams(FlashMode mode);
@@ -143,45 +143,45 @@ public:
 
   bool forceTrigger();
 
-  typedef boost::function<void(IplImage *)> camCaptureCB;
-  void startVideoCapture(camCaptureCB);
+  typedef boost::function<void(IplImage *)> CamCaptureCB;
+  void startVideoCapture(CamCaptureCB);
   void stopVideoCapture();
 
   void closeCamera();
 
 private:
-  inline void CheckError(INT err);
-  void InitPrivateVariables();
+  inline void checkError(INT err) const;
+  void initPrivateVariables();
   int getSubsampleParam(int *scale);
   int getBinningParam(int *scale);
   void flashUpdateGlobalParams();
 
-  std::vector<char*> imgMem_;
-  std::vector<int> imgMemId_;
+  std::vector<char*> img_mem_;
+  std::vector<int> img_mem_id_;
   void initMemoryPool(int size);
   void destroyMemoryPool();
-  void captureThread(camCaptureCB captureCallback);
+  void captureThread(CamCaptureCB callback);
   void restartVideoCapture();
 
-  uEyeColor ColorMode_;
-  bool AutoExposure_;
-  double ExposureTime_;
-  bool HardwareGamma_;
-  bool GainBoost_;
-  int Zoom_;
-  int PixelClock_;
-  bool AutoGain_;
-  int HardwareGain_;
-  double FrameRate_;
-  bool FlashGlobalParams_;
-  HIDS hCam_;
-  SENSORINFO camInfo_;
-  unsigned int serialNo_;
+  uEyeColor color_mode_;
+  bool auto_exposure_;
+  double exposure_time_;
+  bool hardware_gamma_;
+  bool gain_boost_;
+  int zoom_;
+  int pixel_clock_;
+  bool auto_gain_;
+  int hardware_gain_;
+  double frame_rate_;
+  bool flash_global_params_;
+  HIDS cam_;
+  SENSORINFO cam_info_;
+  unsigned int serial_number_;
 
-  bool Streaming_;
-  bool StopCapture_;
-  camCaptureCB StreamCallback_;
-  boost::thread VidThread_;
+  bool streaming_;
+  bool stop_capture_;
+  CamCaptureCB stream_callback_;
+  boost::thread thread_;
 
 };
 } //namespace ueye

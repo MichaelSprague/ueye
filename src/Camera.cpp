@@ -37,13 +37,13 @@
 namespace ueye
 {
 
-void Camera::CheckError(INT err)
+void Camera::checkError(INT err) const
 {
   INT err2 = IS_SUCCESS;
   IS_CHAR* msg;
   if (err != IS_SUCCESS) {
-    if (hCam_ != 0) {
-      is_GetError(hCam_, &err2, &msg);
+    if (cam_ != 0) {
+      is_GetError(cam_, &err2, &msg);
       if (err2 != IS_SUCCESS) {
         throw ueye::uEyeException(err, msg);
       }
@@ -53,53 +53,53 @@ void Camera::CheckError(INT err)
   }
 }
 
-void Camera::InitPrivateVariables()
+void Camera::initPrivateVariables()
 {
-  Streaming_ = false;
-  StopCapture_ = false;
-  ColorMode_ = MONO8;
-  AutoExposure_ = false;
-  ExposureTime_ = 99.0;
-  HardwareGamma_ = true;
-  GainBoost_ = false;
-  Zoom_ = 1;
-  PixelClock_ = 20;
-  AutoGain_ = false;
-  HardwareGain_ = 100;
-  FrameRate_ = 5.0;
-  FlashGlobalParams_ = false;
-  serialNo_ = 0;
-  hCam_ = 0;
-  memset(&camInfo_, 0x00, sizeof(camInfo_));
-  StreamCallback_ = NULL;
+  streaming_ = false;
+  stop_capture_ = false;
+  color_mode_ = MONO8;
+  auto_exposure_ = false;
+  exposure_time_ = 99.0;
+  hardware_gamma_ = true;
+  gain_boost_ = false;
+  zoom_ = 1;
+  pixel_clock_ = 20;
+  auto_gain_ = false;
+  hardware_gain_ = 100;
+  frame_rate_ = 5.0;
+  flash_global_params_ = false;
+  serial_number_ = 0;
+  cam_ = 0;
+  memset(&cam_info_, 0x00, sizeof(cam_info_));
+  stream_callback_ = NULL;
 }
 
 Camera::Camera()
 {
-  InitPrivateVariables();
+  initPrivateVariables();
 }
 
-bool Camera::checkVersion(int &Major, int &Minor, int &Build, char *&Expected)
+bool Camera::checkVersion(int &major, int &minor, int &build, char *&expected)
 {
-  Expected = (char*)"4.40.19";
-  Build = is_GetDLLVersion();
-  Major = (Build >> 24) & 0x000000FF;
-  Minor = (Build >> 16) & 0x000000FF;
-  Build &= 0x0000FFFF;
-  if ((Major == 4) && (Minor == 40) && (Build == 19)) {
+  expected = (char*)"4.40.19";
+  build = is_GetDLLVersion();
+  major = (build >> 24) & 0x000000FF;
+  minor = (build >> 16) & 0x000000FF;
+  build &= 0x0000FFFF;
+  if ((major == 4) && (minor == 40) && (build == 19)) {
     return true;
   }
   return false;
 }
 
-int Camera::getNumberOfCameras()
+int Camera::getNumberOfCameras() const
 {
-  int Num = 0;
-  CheckError(is_GetNumberOfCameras(&Num));
-  return Num;
+  int num = 0;
+  checkError(is_GetNumberOfCameras(&num));
+  return num;
 }
 
-unsigned int Camera::getSerialNumberList(std::vector<unsigned int>& SerNo, std::vector<unsigned int>& DevId)
+unsigned int Camera::getSerialNumberList(std::vector<unsigned int>& serial, std::vector<unsigned int>& dev_id)
 {
   int num = getNumberOfCameras();
   if (num > 0) {
@@ -107,11 +107,11 @@ unsigned int Camera::getSerialNumberList(std::vector<unsigned int>& SerNo, std::
     list->dwCount = num;
     if (is_GetCameraList(list) == IS_SUCCESS) {
       num = list->dwCount;
-      SerNo.resize(num);
-      DevId.resize(num);
+      serial.resize(num);
+      dev_id.resize(num);
       for (int i = 0; i < num; i++) {
-        SerNo[i] = atoll(list->uci[i].SerNo);
-        DevId[i] = list->uci[i].dwDeviceID;
+        serial[i] = atoll(list->uci[i].SerNo);
+        dev_id[i] = list->uci[i].dwDeviceID;
       }
     } else {
       num = 0;
@@ -128,28 +128,28 @@ bool Camera::openCameraCamId(unsigned int id)
     return false;
   }
 
-  hCam_ = id;
-  CheckError(is_InitCamera(&hCam_, 0));
+  cam_ = id;
+  checkError(is_InitCamera(&cam_, 0));
 
-  CheckError(is_GetSensorInfo(hCam_, &camInfo_));
+  checkError(is_GetSensorInfo(cam_, &cam_info_));
   CAMINFO info;
-  CheckError(is_GetCameraInfo(hCam_, &info));
-  serialNo_ = atoll(info.SerNo);
+  checkError(is_GetCameraInfo(cam_, &info));
+  serial_number_ = atoll(info.SerNo);
 
-  setColorMode(ColorMode_);
-  setAutoExposure(&AutoExposure_);
-  if (!AutoExposure_) {
-    setExposure(&ExposureTime_);
+  setColorMode(color_mode_);
+  setAutoExposure(&auto_exposure_);
+  if (!auto_exposure_) {
+    setExposure(&exposure_time_);
   }
-  setHardwareGamma(&HardwareGamma_);
-  setGainBoost(&GainBoost_);
-  setAutoGain(&AutoGain_);
-  if (!AutoGain_) {
-    setHardwareGain(&HardwareGain_);
+  setHardwareGamma(&hardware_gamma_);
+  setGainBoost(&gain_boost_);
+  setAutoGain(&auto_gain_);
+  if (!auto_gain_) {
+    setHardwareGain(&hardware_gain_);
   }
-  setZoom(&Zoom_);
-  setPixelClock(&PixelClock_);
-  setFrameRate(&FrameRate_);
+  setZoom(&zoom_);
+  setPixelClock(&pixel_clock_);
+  setFrameRate(&frame_rate_);
   return true;
 }
 bool Camera::openCameraDevId(unsigned int id)
@@ -158,12 +158,12 @@ bool Camera::openCameraDevId(unsigned int id)
 }
 bool Camera::openCameraSerNo(unsigned int serial_number)
 {
-  std::vector<unsigned int> SerNo;
-  std::vector<unsigned int> DevId;
-  unsigned int num = getSerialNumberList(SerNo, DevId);
+  std::vector<unsigned int> serial;
+  std::vector<unsigned int> dev_id;
+  unsigned int num = getSerialNumberList(serial, dev_id);
   for (unsigned int i = 0; i < num; i++) {
-    if (SerNo[i] == serial_number) {
-      return openCameraDevId(DevId[i]);
+    if (serial[i] == serial_number) {
+      return openCameraDevId(dev_id[i]);
     }
   }
   return false;
@@ -198,198 +198,198 @@ const char* Camera::colorModeToString(uEyeColor mode)
   return "";
 }
 
-char * Camera::getCameraName()
+const char * Camera::getCameraName() const
 {
-  return camInfo_.strSensorName;
+  return cam_info_.strSensorName;
 }
-unsigned int Camera::getCameraSerialNo()
+unsigned int Camera::getCameraSerialNo() const
 {
-  return serialNo_;
+  return serial_number_;
 }
-int Camera::getZoom()
+int Camera::getZoom() const
 {
-  return Zoom_;
+  return zoom_;
 }
-int Camera::getWidthMax()
+int Camera::getWidthMax() const
 {
-  return camInfo_.nMaxWidth;
+  return cam_info_.nMaxWidth;
 }
-int Camera::getHeightMax()
+int Camera::getHeightMax() const
 {
-  return camInfo_.nMaxHeight;
+  return cam_info_.nMaxHeight;
 }
-int Camera::getWidth()
+int Camera::getWidth() const
 {
-  return camInfo_.nMaxWidth / Zoom_;
+  return cam_info_.nMaxWidth / zoom_;
 }
-int Camera::getHeight()
+int Camera::getHeight() const
 {
-  return camInfo_.nMaxHeight / Zoom_;
+  return cam_info_.nMaxHeight / zoom_;
 }
-uEyeColor Camera::getColorMode()
+uEyeColor Camera::getColorMode() const
 {
-  return ColorMode_;
+  return color_mode_;
 }
-bool Camera::getAutoExposure()
+bool Camera::getAutoExposure() const
 {
-  return AutoExposure_;
+  return auto_exposure_;
 }
-double Camera::getExposure()
+double Camera::getExposure() const
 {
   double time_ms;
-  CheckError(is_Exposure(hCam_, IS_EXPOSURE_CMD_GET_EXPOSURE, &time_ms, sizeof(double)));
+  checkError(is_Exposure(cam_, IS_EXPOSURE_CMD_GET_EXPOSURE, &time_ms, sizeof(double)));
   return time_ms;
 }
-bool Camera::getHardwareGamma()
+bool Camera::getHardwareGamma() const
 {
-  return HardwareGamma_;
+  return hardware_gamma_;
 }
-int Camera::getPixelClock()
+int Camera::getPixelClock() const
 {
-  return PixelClock_;
+  return pixel_clock_;
 }
-bool Camera::getGainBoost()
+bool Camera::getGainBoost() const
 {
-  return GainBoost_;
+  return gain_boost_;
 }
-bool Camera::getAutoGain()
+bool Camera::getAutoGain() const
 {
-  return AutoGain_;
+  return auto_gain_;
 }
 unsigned int Camera::getHardwareGain()
 {
-  HardwareGain_ = is_SetHWGainFactor(hCam_, IS_GET_MASTER_GAIN_FACTOR, 0);
-  return HardwareGain_;
+  hardware_gain_ = is_SetHWGainFactor(cam_, IS_GET_MASTER_GAIN_FACTOR, 0);
+  return hardware_gain_;
 }
-TriggerMode Camera::getTriggerMode()
+TriggerMode Camera::getTriggerMode() const
 {
-  return (TriggerMode)is_SetExternalTrigger(hCam_, IS_GET_EXTERNALTRIGGER);
+  return (TriggerMode)is_SetExternalTrigger(cam_, IS_GET_EXTERNALTRIGGER);
 }
-TriggerMode Camera::getSupportedTriggers()
+TriggerMode Camera::getSupportedTriggers() const
 {
-  return (TriggerMode)is_SetExternalTrigger(hCam_, IS_GET_SUPPORTED_TRIGGER_MODE);
+  return (TriggerMode)is_SetExternalTrigger(cam_, IS_GET_SUPPORTED_TRIGGER_MODE);
 }
 
 void Camera::setColorMode(uEyeColor mode)
 {
-  bool restart = Streaming_ && (StreamCallback_ != NULL);
+  bool restart = streaming_ && (stream_callback_ != NULL);
   stopVideoCapture();
-  if (is_SetColorMode(hCam_, mode) != IS_SUCCESS) {
+  if (is_SetColorMode(cam_, mode) != IS_SUCCESS) {
     mode = MONO8;
-    is_SetColorMode(hCam_, mode);
+    is_SetColorMode(cam_, mode);
   }
-  ColorMode_ = mode;
+  color_mode_ = mode;
   if (restart) {
-    startVideoCapture(StreamCallback_);
+    startVideoCapture(stream_callback_);
   }
 }
-void Camera::setAutoExposure(bool *Enable)
+void Camera::setAutoExposure(bool *enable)
 {
-  double param1 = *Enable ? 1.0 : 0.0;
+  double param1 = *enable ? 1.0 : 0.0;
   double param2 = 0;
-  if (IS_SUCCESS != is_SetAutoParameter(hCam_, IS_SET_ENABLE_AUTO_SHUTTER, &param1, &param2)) {
+  if (IS_SUCCESS != is_SetAutoParameter(cam_, IS_SET_ENABLE_AUTO_SHUTTER, &param1, &param2)) {
     param1 = 0;
-    is_SetAutoParameter(hCam_, IS_SET_ENABLE_AUTO_SHUTTER, &param1, &param2);
-    *Enable = false;
+    is_SetAutoParameter(cam_, IS_SET_ENABLE_AUTO_SHUTTER, &param1, &param2);
+    *enable = false;
   }
-  AutoExposure_ = *Enable;
+  auto_exposure_ = *enable;
 }
 void Camera::setExposure(double *time_ms)
 {
   bool b = false;
   setAutoExposure(&b);
-  CheckError(is_Exposure(hCam_, IS_EXPOSURE_CMD_SET_EXPOSURE, time_ms, sizeof(double)));
+  checkError(is_Exposure(cam_, IS_EXPOSURE_CMD_SET_EXPOSURE, time_ms, sizeof(double)));
   flashUpdateGlobalParams();
-  ExposureTime_ = *time_ms;
+  exposure_time_ = *time_ms;
 }
-void Camera::setHardwareGamma(bool *Enable)
+void Camera::setHardwareGamma(bool *enable)
 {
-  if (*Enable) {
-    if (IS_SUCCESS != is_SetHardwareGamma(hCam_, IS_SET_HW_GAMMA_ON)) {
-      is_SetHardwareGamma(hCam_, IS_SET_HW_GAMMA_OFF);
-      *Enable = false;
+  if (*enable) {
+    if (IS_SUCCESS != is_SetHardwareGamma(cam_, IS_SET_HW_GAMMA_ON)) {
+      is_SetHardwareGamma(cam_, IS_SET_HW_GAMMA_OFF);
+      *enable = false;
     }
   } else {
-    is_SetHardwareGamma(hCam_, IS_SET_HW_GAMMA_OFF);
+    is_SetHardwareGamma(cam_, IS_SET_HW_GAMMA_OFF);
   }
-  HardwareGamma_ = *Enable;
+  hardware_gamma_ = *enable;
 }
 void Camera::setZoom(int *zoom)
 {
-  if (Zoom_ != *zoom) {
+  if (zoom_ != *zoom) {
     // Reset zoom
-    is_SetSubSampling(hCam_, 0);
-    is_SetBinning(hCam_, 0);
+    is_SetSubSampling(cam_, 0);
+    is_SetBinning(cam_, 0);
 
     // Try Subsampling then Binning
-    if (IS_SUCCESS != is_SetSubSampling(hCam_, getSubsampleParam(zoom))) {
-      is_SetSubSampling(hCam_, 0);
-      if (IS_SUCCESS != is_SetBinning(hCam_, getBinningParam(zoom))) {
-        is_SetBinning(hCam_, 0);
+    if (IS_SUCCESS != is_SetSubSampling(cam_, getSubsampleParam(zoom))) {
+      is_SetSubSampling(cam_, 0);
+      if (IS_SUCCESS != is_SetBinning(cam_, getBinningParam(zoom))) {
+        is_SetBinning(cam_, 0);
         *zoom = 1;
       }
     }
 
     // Zoom affects the frame-rate and needs a restart to change the buffer sizes
-    is_HotPixel(hCam_, IS_HOTPIXEL_ENABLE_CAMERA_CORRECTION, NULL, 0);
-    setFrameRate(&FrameRate_);
+    is_HotPixel(cam_, IS_HOTPIXEL_ENABLE_CAMERA_CORRECTION, NULL, 0);
+    setFrameRate(&frame_rate_);
     restartVideoCapture();
   }
-  Zoom_ = *zoom;
+  zoom_ = *zoom;
 }
 void Camera::setPixelClock(int *MHz)
 {
-  int Ranges[3];
-  memset(Ranges, 0x00, sizeof(Ranges));
+  int ranges[3];
+  memset(ranges, 0x00, sizeof(ranges));
 
   // Sanitize to increment, minimum, and maximum
-  CheckError(is_PixelClock(hCam_, IS_PIXELCLOCK_CMD_GET_RANGE, Ranges, sizeof(Ranges)));
-  if (Ranges[2] > 1) {
-    if ((*MHz - Ranges[0]) % Ranges[2] != 0) {
-      *MHz -= (*MHz - Ranges[0]) % Ranges[2];
+  checkError(is_PixelClock(cam_, IS_PIXELCLOCK_CMD_GET_RANGE, ranges, sizeof(ranges)));
+  if (ranges[2] > 1) {
+    if ((*MHz - ranges[0]) % ranges[2] != 0) {
+      *MHz -= (*MHz - ranges[0]) % ranges[2];
     }
   }
-  if (*MHz < Ranges[0]) {
-    *MHz = Ranges[0];
+  if (*MHz < ranges[0]) {
+    *MHz = ranges[0];
   }
-  if (*MHz > Ranges[1]) {
-    *MHz = Ranges[1];
+  if (*MHz > ranges[1]) {
+    *MHz = ranges[1];
   }
 
-  CheckError(is_PixelClock(hCam_, IS_PIXELCLOCK_CMD_SET, MHz, sizeof(int)));
-  setFrameRate(&FrameRate_);
+  checkError(is_PixelClock(cam_, IS_PIXELCLOCK_CMD_SET, MHz, sizeof(int)));
+  setFrameRate(&frame_rate_);
 
-  PixelClock_ = *MHz;
+  pixel_clock_ = *MHz;
 }
 void Camera::setFrameRate(double *rate)
 {
-  CheckError(is_SetFrameRate(hCam_, *rate, rate));
+  checkError(is_SetFrameRate(cam_, *rate, rate));
   flashUpdateGlobalParams();
-  FrameRate_ = *rate;
+  frame_rate_ = *rate;
 }
 void Camera::setGainBoost(bool *enable)
 {
-  if (is_SetGainBoost(hCam_, IS_GET_SUPPORTED_GAINBOOST) == IS_SET_GAINBOOST_ON) {
+  if (is_SetGainBoost(cam_, IS_GET_SUPPORTED_GAINBOOST) == IS_SET_GAINBOOST_ON) {
     if (*enable)
-      is_SetGainBoost(hCam_, IS_SET_GAINBOOST_ON);
+      is_SetGainBoost(cam_, IS_SET_GAINBOOST_ON);
     else
-      is_SetGainBoost(hCam_, IS_SET_GAINBOOST_OFF);
-    GainBoost_ = is_SetGainBoost(hCam_, IS_GET_GAINBOOST) == IS_SET_GAINBOOST_ON;
+      is_SetGainBoost(cam_, IS_SET_GAINBOOST_OFF);
+    gain_boost_ = is_SetGainBoost(cam_, IS_GET_GAINBOOST) == IS_SET_GAINBOOST_ON;
   } else {
-    GainBoost_ = false;
+    gain_boost_ = false;
   }
-  *enable = GainBoost_;
+  *enable = gain_boost_;
 }
-void Camera::setAutoGain(bool *Enable)
+void Camera::setAutoGain(bool *enable)
 {
-  double param1 = *Enable ? 1.0 : 0.0;
+  double param1 = *enable ? 1.0 : 0.0;
   double param2 = 0;
-  if (IS_SUCCESS != is_SetAutoParameter(hCam_, IS_SET_ENABLE_AUTO_GAIN, &param1, &param2)) {
+  if (IS_SUCCESS != is_SetAutoParameter(cam_, IS_SET_ENABLE_AUTO_GAIN, &param1, &param2)) {
     param1 = 0;
-    is_SetAutoParameter(hCam_, IS_SET_ENABLE_AUTO_GAIN, &param1, &param2);
-    *Enable = false;
+    is_SetAutoParameter(cam_, IS_SET_ENABLE_AUTO_GAIN, &param1, &param2);
+    *enable = false;
   }
-  AutoGain_ = *Enable;
+  auto_gain_ = *enable;
 }
 void Camera::setHardwareGain(int *gain)
 {
@@ -399,13 +399,13 @@ void Camera::setHardwareGain(int *gain)
     *gain = 0;
   if (*gain > 400)
     *gain = 400;
-  HardwareGain_ = is_SetHWGainFactor(hCam_, IS_SET_MASTER_GAIN_FACTOR, *gain);
-  *gain = HardwareGain_;
+  hardware_gain_ = is_SetHWGainFactor(cam_, IS_SET_MASTER_GAIN_FACTOR, *gain);
+  *gain = hardware_gain_;
 }
 bool Camera::setTriggerMode(TriggerMode mode)
 {
   if ((mode == 0) || (mode & getSupportedTriggers())) {
-    if (is_SetExternalTrigger(hCam_, mode) == IS_SUCCESS) {
+    if (is_SetExternalTrigger(cam_, mode) == IS_SUCCESS) {
       return true;
     }
   }
@@ -413,34 +413,34 @@ bool Camera::setTriggerMode(TriggerMode mode)
 }
 void Camera::setFlashWithGlobalParams(FlashMode mode)
 {
-  UINT nMode = mode;
+  UINT m = mode;
   switch (mode) {
     case FLASH_FREERUN_ACTIVE_LO:
     case FLASH_FREERUN_ACTIVE_HI:
     case FLASH_TRIGGER_ACTIVE_LO:
     case FLASH_TRIGGER_ACTIVE_HI:
-      FlashGlobalParams_ = true;
+      flash_global_params_ = true;
       break;
 
     case FLASH_CONSTANT_HIGH:
     case FLASH_CONSTANT_LOW:
-      FlashGlobalParams_ = false;
+      flash_global_params_ = false;
       break;
 
     case FLASH_OFF:
     default:
-      FlashGlobalParams_ = false;
-      nMode = FLASH_OFF;
+      flash_global_params_ = false;
+      m = FLASH_OFF;
       break;
   }
-  CheckError(is_IO(hCam_, IS_IO_CMD_FLASH_SET_MODE, (void*)&nMode, sizeof(nMode)));
+  checkError(is_IO(cam_, IS_IO_CMD_FLASH_SET_MODE, (void*)&m, sizeof(m)));
   flashUpdateGlobalParams();
 }
 void Camera::setFlash(FlashMode mode, int delay_usec, unsigned int duration_usec)
 {
   int num_mode = int(mode);
 
-  CheckError(is_IO(hCam_, IS_IO_CMD_FLASH_SET_MODE, (void*)&num_mode, sizeof(num_mode)));
+  checkError(is_IO(cam_, IS_IO_CMD_FLASH_SET_MODE, (void*)&num_mode, sizeof(num_mode)));
 
   if (mode != FLASH_OFF) {
     IO_FLASH_PARAMS params;
@@ -449,10 +449,10 @@ void Camera::setFlash(FlashMode mode, int delay_usec, unsigned int duration_usec
     params.s32Delay = delay_usec;
     params.u32Duration = duration_usec;
 
-    CheckError(is_IO(hCam_, IS_IO_CMD_FLASH_SET_PARAMS, &params, sizeof(params)));
+    checkError(is_IO(cam_, IS_IO_CMD_FLASH_SET_PARAMS, &params, sizeof(params)));
   }
 
-  FlashGlobalParams_ = false;
+  flash_global_params_ = false;
 }
 void Camera::setFlash(FlashMode mode)
 {
@@ -462,21 +462,21 @@ void Camera::setFlash(FlashMode mode)
 }
 void Camera::flashUpdateGlobalParams()
 {
-  if (FlashGlobalParams_) {
+  if (flash_global_params_) {
     IO_FLASH_PARAMS params;
-    CheckError(is_IO(hCam_, IS_IO_CMD_FLASH_GET_GLOBAL_PARAMS, (void*)&params, sizeof(params)));
-    CheckError(is_IO(hCam_, IS_IO_CMD_FLASH_APPLY_GLOBAL_PARAMS, NULL, 0));
+    checkError(is_IO(cam_, IS_IO_CMD_FLASH_GET_GLOBAL_PARAMS, (void*)&params, sizeof(params)));
+    checkError(is_IO(cam_, IS_IO_CMD_FLASH_APPLY_GLOBAL_PARAMS, NULL, 0));
   }
 }
 void Camera::setTriggerDelay(int delay_usec)
 {
-  CheckError(is_SetTriggerDelay(hCam_, delay_usec));
+  checkError(is_SetTriggerDelay(cam_, delay_usec));
 }
 
 bool Camera::forceTrigger()
 {
-  if (Streaming_)
-    return is_ForceTrigger(hCam_) == IS_SUCCESS;
+  if (streaming_)
+    return is_ForceTrigger(cam_) == IS_SUCCESS;
   return false;
 }
 
@@ -523,10 +523,10 @@ int Camera::getBinningParam(int *scale)
 
 void Camera::closeCamera()
 {
-  if (hCam_ > 0) {
+  if (cam_ > 0) {
     // Release camera and all associated memory
-    CheckError(IS_SUCCESS != is_ExitCamera(hCam_));
-    InitPrivateVariables();
+    checkError(IS_SUCCESS != is_ExitCamera(cam_));
+    initPrivateVariables();
   }
 }
 
@@ -538,7 +538,7 @@ Camera::~Camera()
 void Camera::initMemoryPool(int size)
 {
   int bits = 32;
-  switch (ColorMode_) {
+  switch (color_mode_) {
     case MONO8:
       bits = 8;
       break;
@@ -561,49 +561,49 @@ void Camera::initMemoryPool(int size)
       break;
   }
 
-  int Width = getWidth();
-  int Height = getHeight();
+  int width = getWidth();
+  int height = getHeight();
   if (size < 2) {
     size = 2;
   }
-  imgMem_.resize(size);
-  imgMemId_.resize(size);
+  img_mem_.resize(size);
+  img_mem_id_.resize(size);
   for (int i = 0; i < size; i++) {
-    if (IS_SUCCESS != is_AllocImageMem(hCam_, Width, Height, bits, &imgMem_[i], &imgMemId_[i])) {
+    if (IS_SUCCESS != is_AllocImageMem(cam_, width, height, bits, &img_mem_[i], &img_mem_id_[i])) {
       throw uEyeException(-1, "Failed to initialize memory.");
     }
     //add memory to memory pool
-    if (IS_SUCCESS != is_SetImageMem(hCam_, imgMem_[i], imgMemId_[i])) {
+    if (IS_SUCCESS != is_SetImageMem(cam_, img_mem_[i], img_mem_id_[i])) {
       throw uEyeException(-1, "Failed to initialize memory.");
     }
   }
 }
 void Camera::destroyMemoryPool()
 {
-  for (int i = 0; i < imgMem_.size(); i++) {
-    CheckError(is_FreeImageMem(hCam_, imgMem_[i], imgMemId_[i]));
+  for (int i = 0; i < img_mem_.size(); i++) {
+    checkError(is_FreeImageMem(cam_, img_mem_[i], img_mem_id_[i]));
   }
-  imgMem_.clear();
-  imgMemId_.clear();
+  img_mem_.clear();
+  img_mem_id_.clear();
 }
 
-void Camera::captureThread(camCaptureCB callback)
+void Camera::captureThread(CamCaptureCB callback)
 {
-  Streaming_ = true;
-  void * imgMem;
-  StopCapture_ = false;
+  streaming_ = true;
+  char * img_mem;
+  stop_capture_ = false;
 
   initMemoryPool(4);
 
   // Setup video event
-  CheckError(is_EnableEvent(hCam_, IS_SET_EVENT_FRAME));
+  checkError(is_EnableEvent(cam_, IS_SET_EVENT_FRAME));
 
   // There is a weird condition with the ueye 4.30 where
   // this never returns when using IS_WAIT.
   // We are using IS_DONT_WAIT and retry every 0.1s for 2s instead
   bool capture = false;
   for (int i = 0; i < 20; ++i) {
-    if (is_CaptureVideo(hCam_, IS_DONT_WAIT) == IS_SUCCESS) {
+    if (is_CaptureVideo(cam_, IS_DONT_WAIT) == IS_SUCCESS) {
       capture = true;
       break;
     }
@@ -614,7 +614,7 @@ void Camera::captureThread(camCaptureCB callback)
   }
 
   IplImage *p_img = NULL;
-  switch (ColorMode_) {
+  switch (color_mode_) {
     case MONO8:
       p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_8U, 1);
       break;
@@ -642,43 +642,43 @@ void Camera::captureThread(camCaptureCB callback)
       return;
   }
 
-  while (!StopCapture_) {
+  while (!stop_capture_) {
     // Wait for image. Timeout after 2*FramePeriod = (2000ms/FrameRate)
-    if (is_WaitEvent(hCam_, IS_SET_EVENT_FRAME, (int)(2000 / FrameRate_)) == IS_SUCCESS) {
-      if (is_GetImageMem(hCam_, &imgMem) == IS_SUCCESS) {
-        p_img->imageData = (char*)imgMem;
+    if (is_WaitEvent(cam_, IS_SET_EVENT_FRAME, (int)(2000 / frame_rate_)) == IS_SUCCESS) {
+      if (is_GetImageMem(cam_, (void**)&img_mem) == IS_SUCCESS) {
+        p_img->imageData = img_mem;
         callback(p_img);
       }
     }
   }
 
   // Stop video event
-  CheckError(is_DisableEvent(hCam_, IS_SET_EVENT_FRAME));
-  CheckError(is_StopLiveVideo(hCam_, IS_WAIT));
+  checkError(is_DisableEvent(cam_, IS_SET_EVENT_FRAME));
+  checkError(is_StopLiveVideo(cam_, IS_WAIT));
 
   destroyMemoryPool();
-  Streaming_ = false;
+  streaming_ = false;
 }
 
-void Camera::startVideoCapture(camCaptureCB callback)
+void Camera::startVideoCapture(CamCaptureCB callback)
 {
-  StreamCallback_ = callback;
-  VidThread_ = boost::thread(&Camera::captureThread, this, callback);
+  stream_callback_ = callback;
+  thread_ = boost::thread(&Camera::captureThread, this, callback);
 }
 void Camera::stopVideoCapture()
 {
-  StopCapture_ = true;
-  if (VidThread_.joinable()) {
+  stop_capture_ = true;
+  if (thread_.joinable()) {
     forceTrigger();
-    VidThread_.join();
+    thread_.join();
   }
 }
 void Camera::restartVideoCapture()
 {
-  if (Streaming_) {
-    if (StreamCallback_ != NULL) {
+  if (streaming_) {
+    if (stream_callback_ != NULL) {
       stopVideoCapture();
-      startVideoCapture(StreamCallback_);
+      startVideoCapture(stream_callback_);
     }
   }
 }
