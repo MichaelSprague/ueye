@@ -78,7 +78,7 @@ void Camera::InitPrivateVariables()
 {
 	Streaming_ = false;
 	StopCapture_ = false;
-	ColorMode_ = RGB;
+	ColorMode_ = MONO8;
 	AutoExposure_ = false;
 	ExposureTime_ = 99.0;
 	HardwareGamma_ = true;
@@ -191,6 +191,35 @@ bool Camera::openCameraSerNo(unsigned int serial_number)
 	return false;
 }
 
+const char* Camera::colorModeToString(uEyeColor mode)
+{
+	switch (mode) {
+	case MONO8:
+		return "mono8";
+	case MONO16:
+		return "mono16";
+	case BGR5:
+		return "bgr5";
+	case BGR565:
+		return "bgr565";
+	case YUV:
+		return "yuv422";
+	case YCbCr:
+		return "ycbcr422";
+	case BGR8:
+		return "bgr8";
+	case RGB8:
+		return "rgb8";
+	case BGRA8:
+	case BGRY8:
+		return "bgra8";
+	case RGBA8:
+	case RGBY8:
+		return "rgba8";
+	}
+	return "";
+}
+
 char * Camera::getCameraName()
 {
 	return camInfo_.strSensorName;
@@ -217,6 +246,10 @@ int Camera::getWidth()
 int Camera::getHeight()
 {
 	return camInfo_.nMaxHeight / Zoom_;
+}
+uEyeColor Camera::getColorMode()
+{
+	return ColorMode_;
 }
 bool Camera::getAutoExposure()
 {
@@ -260,8 +293,16 @@ TriggerMode Camera::getSupportedTriggers()
 
 void Camera::setColorMode(uEyeColor mode)
 {
-	CHECK_ERR(is_SetColorMode(hCam_, mode));
+	bool restart = Streaming_ && (StreamCallback_ != NULL);
+	stopVideoCapture();
+	if (is_SetColorMode(hCam_, mode) != IS_SUCCESS){
+		mode = MONO8;
+		is_SetColorMode(hCam_, mode);
+	}
 	ColorMode_ = mode;
+	if(restart){
+		startVideoCapture(StreamCallback_);
+	}
 }
 void Camera::setAutoExposure(bool *Enable)
 {
@@ -518,6 +559,30 @@ Camera::~Camera(){
 
 void Camera::initMemoryPool(int size)
 {
+	int bits = 32;
+	switch (ColorMode_) {
+	case MONO8:
+		bits = 8;
+		break;
+	case MONO16:
+	case BGR5:
+	case BGR565:
+	case YUV:
+	case YCbCr:
+		bits = 16;
+		break;
+	case BGR8:
+	case RGB8:
+		bits = 24;
+		break;
+	case BGRA8:
+	case BGRY8:
+	case RGBA8:
+	case RGBY8:
+		bits = 32;
+		break;
+	}
+
 	int Width = getWidth();
 	int Height = getHeight();
 	if(size < 2){
@@ -526,7 +591,7 @@ void Camera::initMemoryPool(int size)
 	imgMem_.resize(size);
 	imgMemId_.resize(size);
 	for (int i = 0; i < size; i++){
-		if (IS_SUCCESS != is_AllocImageMem (hCam_, Width, Height, 24, &imgMem_[i], &imgMemId_[i])){
+		if (IS_SUCCESS != is_AllocImageMem (hCam_, Width, Height, bits, &imgMem_[i], &imgMemId_[i])){
 			throw uEyeException(-1, "Failed to initialize memory.");
 		}
 		//add memory to memory pool
@@ -570,7 +635,34 @@ void Camera::captureThread(camCaptureCB callback)
 		throw uEyeException(-1, "Capture could not be started.");
 	}
 
-	IplImage * p_img = cvCreateImageHeader(cvSize(getWidth(),getHeight()), IPL_DEPTH_8U, 3);
+	IplImage *p_img = NULL;
+	switch (ColorMode_) {
+	case MONO8:
+		p_img = cvCreateImageHeader(cvSize(getWidth(),getHeight()), IPL_DEPTH_8U, 1);
+		break;
+	case MONO16:
+	case BGR5:
+	case BGR565:
+		p_img = cvCreateImageHeader(cvSize(getWidth(),getHeight()), IPL_DEPTH_16U, 1);
+		break;
+	case YUV:
+	case YCbCr:
+		p_img = cvCreateImageHeader(cvSize(getWidth(),getHeight()), IPL_DEPTH_8U, 2);
+		break;
+	case BGR8:
+	case RGB8:
+		p_img = cvCreateImageHeader(cvSize(getWidth(),getHeight()), IPL_DEPTH_8U, 3);
+		break;
+	case BGRA8:
+	case BGRY8:
+	case RGBA8:
+	case RGBY8:
+		p_img = cvCreateImageHeader(cvSize(getWidth(),getHeight()), IPL_DEPTH_8U, 4);
+		break;
+	default:
+		throw uEyeException(-1, "Unsupported color mode when initializing image header.");
+		return;
+	}
 
 	while(!StopCapture_){
 		// Wait for image. Timeout after 2*FramePeriod = (2000ms/FrameRate)

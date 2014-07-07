@@ -162,6 +162,27 @@ void CameraNode::reconfig(monoConfig &config, uint32_t level)
 	}
 	trigger_mode_ = config.trigger;
 
+	// Color Mode
+	uEyeColor color;
+	switch (config.color) {
+	default:
+	case mono_COLOR_MONO8: color = MONO8; break;
+	case mono_COLOR_MONO16: color = MONO16; break;
+	case mono_COLOR_YUV: color = YUV; break;
+	case mono_COLOR_YCbCr: color = YCbCr; break;
+	case mono_COLOR_BGR5: color = BGR5; break;
+	case mono_COLOR_BGR565: color = BGR565; break;
+	case mono_COLOR_BGR8: color = BGR8; break;
+	case mono_COLOR_BGRA8: color = BGRA8; break;
+	case mono_COLOR_BGRY8: color = BGRY8; break;
+	case mono_COLOR_RGB8: color = RGB8; break;
+	case mono_COLOR_RGBA8: color = RGBA8; break;
+	case mono_COLOR_RGBY8: color = RGBY8; break;
+	}
+	if (cam_.getColorMode() != color){
+		cam_.setColorMode(color);
+	}
+
 	// Latch Auto Parameters
 	if(auto_gain_ && !config.auto_gain){
 		config.gain = cam_.getHardwareGain();
@@ -317,7 +338,7 @@ sensor_msgs::ImagePtr CameraNode::processFrame(IplImage* frame, sensor_msgs::Cam
 	info = msg;
 
 	converter_.header = msg_camera_info_.header;
-	converter_.encoding = "bgr8";
+	converter_.encoding = Camera::colorModeToString(cam_.getColorMode());
 	converter_.image = frame;
 	return converter_.toImageMsg();
 }
