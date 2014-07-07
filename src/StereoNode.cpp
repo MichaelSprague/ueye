@@ -354,9 +354,9 @@ bool StereoNode::setCameraInfo(sensor_msgs::SetCameraInfo::Request& req, sensor_
 		rsp.success = false;
 	}else{
 		std::string ini = ini_stream.str();
-		fstream param_file;
+		std::fstream param_file;
 		std::string filename = config_path_ + "/" + configFileName(cam);
-		param_file.open(filename.c_str(), ios::in | ios::out | ios::trunc);
+		param_file.open(filename.c_str(), std::ios::in | std::ios::out | std::ios::trunc);
 
 		if (param_file.is_open()) {
 			param_file<< ini.c_str();
@@ -389,8 +389,8 @@ void StereoNode::loadIntrinsics(Camera &cam, sensor_msgs::CameraInfo &msg_info)
 	char buffer[12800];
 
 	std::string MyPath = config_path_ + "/" + configFileName(cam);
-	fstream param_file;
-	param_file.open(MyPath.c_str(), ios::out | ios::in);
+	std::fstream param_file;
+	param_file.open(MyPath.c_str(), std::ios::in);
 
 	if (param_file.is_open()) {
 		param_file.read(buffer, 12800);
