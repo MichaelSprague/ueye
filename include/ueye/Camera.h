@@ -138,9 +138,8 @@ namespace ueye{
 		int getBinningParam(int *scale);
 		void flashUpdateGlobalParams();
 
-		char **imgMem_;
-		int  *imgMemId_;
-		int NumBuffers_;
+		std::vector<char*> imgMem_;
+		std::vector<int> imgMemId_;
 		void initMemoryPool(int size);
 		void destroyMemoryPool();
 		void captureThread(camCaptureCB captureCallback);
