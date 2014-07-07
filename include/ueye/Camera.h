@@ -42,8 +42,6 @@
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 
-using namespace std;
-
 namespace ueye{
 
 	struct uEyeException : public std::runtime_error
@@ -85,7 +83,7 @@ namespace ueye{
 		// Initialization functions in order they should be called.
 		bool checkVersion(int &Major, int &Minor, int &Build, char *&Expected);
 		int getNumberOfCameras();
-		unsigned int getSerialNumberList(vector<unsigned int>& SerNo, vector<unsigned int>& DevId);
+		unsigned int getSerialNumberList(std::vector<unsigned int>& SerNo, std::vector<unsigned int>& DevId);
 		bool openCameraCamId(unsigned int id);
 		bool openCameraDevId(unsigned int id);
 		bool openCameraSerNo(unsigned int serial_number);

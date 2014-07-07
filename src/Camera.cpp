@@ -34,8 +34,6 @@
 
 #include "ueye/Camera.h"
 
-using namespace std;
-
 #define DEBUG_ERROR_CHECKS 0
 
 #if DEBUG_ERROR_CHECKS
@@ -126,7 +124,7 @@ int Camera::getNumberOfCameras()
 }
 
 
-unsigned int Camera::getSerialNumberList(vector<unsigned int>& SerNo, vector<unsigned int>& DevId)
+unsigned int Camera::getSerialNumberList(std::vector<unsigned int>& SerNo, std::vector<unsigned int>& DevId)
 {
 	int num = getNumberOfCameras();
 	if( num > 0 ) {
@@ -185,8 +183,8 @@ bool Camera::openCameraDevId(unsigned int id)
 }
 bool Camera::openCameraSerNo(unsigned int serial_number)
 {
-	vector<unsigned int> SerNo;
-	vector<unsigned int> DevId;
+	std::vector<unsigned int> SerNo;
+	std::vector<unsigned int> DevId;
 	unsigned int num = getSerialNumberList(SerNo, DevId);
 	for(unsigned int i=0; i<num; i++){
 		if(SerNo[i] == serial_number){
