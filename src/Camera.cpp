@@ -34,8 +34,6 @@
 
 #include "ueye/Camera.h"
 
-#include <ros/time.h>  // only used for ros::Duration::sleep()
-
 using namespace std;
 
 #define DEBUG_ERROR_CHECKS 0
@@ -571,7 +569,7 @@ void Camera::captureThread(camCaptureCB callback)
 			capture = true;
 			break;
 		}
-		ros::Duration(0.1).sleep();
+		usleep(100000); // 100ms
 	}
 	if (!capture){
 		throw uEyeException(-1, "Capture could not be started.");
