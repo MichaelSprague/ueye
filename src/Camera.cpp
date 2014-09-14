@@ -34,6 +34,10 @@
 
 #include "ueye/Camera.h"
 
+#if UEYE_VERSION_CODE != UEYE_VERSION(4, 40, 0)
+#warning Expected ueye driver version 4.40.x. Different version found in uEye.h.
+#endif
+
 namespace ueye
 {
 
