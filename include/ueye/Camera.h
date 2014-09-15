@@ -35,7 +35,7 @@
 #ifndef UEYE_CAMERA_H_
 #define UEYE_CAMERA_H_
 
-#include <uEye.h>
+#include <ueye.h>
 #include <opencv/cv.h>
 #include <stdexcept>
 #include <string>
@@ -96,7 +96,7 @@ public:
   ~Camera();
 
   // Initialization functions in order they should be called.
-  static bool checkVersion(int &major, int &minor, int &build, char *&expected);
+  static bool checkVersion(int &major, int &minor, int &build, const char *&expected);
   int getNumberOfCameras() const;
   unsigned int getSerialNumberList(std::vector<unsigned int>& serial, std::vector<unsigned int>& dev_id);
   bool openCameraCamId(unsigned int id);

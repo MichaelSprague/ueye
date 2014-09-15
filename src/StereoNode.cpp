@@ -49,7 +49,7 @@ StereoNode::StereoNode(ros::NodeHandle node, ros::NodeHandle priv_nh) :
   l_stamp_ = r_stamp_ = ros::Time(0);
 
   // Check for a valid uEye installation and supported version
-  char *Version;
+  const char *Version;
   int Major, Minor, Build;
   if (l_cam_.checkVersion(Major, Minor, Build, Version)) {
     ROS_INFO("Loaded uEye SDK %s.", Version);

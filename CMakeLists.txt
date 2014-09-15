@@ -38,6 +38,51 @@ include_directories(
   ${${PROJECT_NAME}_INCLUDE_EXPORTS}
 )
 
+# Check for installed uEye SDK
+include(CheckIncludeFileCXX)
+check_include_file_cxx("ueye.h" HAVE_UEYE_H)
+if (NOT HAVE_UEYE_H)
+  include(TargetArch.cmake)
+  target_architecture(TARGET_ARCH)
+  message("-- uEye SDK not found. Using downloaded files for '${TARGET_ARCH}' architecture.")
+
+  if (TARGET_ARCH STREQUAL "x86_64")
+    file(DOWNLOAD 
+      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_x86_64.tar.gz
+      ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_x86_64.tar.gz
+      SHOW_PROGRESS
+      INACTIVITY_TIMEOUT 60
+      EXPECTED_MD5 e4363b2772ef0a10c1c6fe0c0247dc8f
+      TLS_VERIFY on)
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_x86_64.tar.gz
+      WORKING_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty
+    )
+    include_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/x86_64)
+    link_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/x86_64)
+  elseif (TARGET_ARCH STREQUAL "i386")
+    file(DOWNLOAD 
+      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_i386.tar.gz
+      ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_i386.tar.gz
+      SHOW_PROGRESS
+      INACTIVITY_TIMEOUT 60
+      EXPECTED_MD5 d9803f2db1604f5a0993c4b62d395a31
+      TLS_VERIFY on)
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_i386.tar.gz
+      WORKING_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty
+    )
+    include_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/i386)
+    link_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/i386)
+  elseif (TARGET_ARCH STREQUAL "arm")
+    # not uploaded yet...
+    include_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/arm)
+    link_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/arm)
+  else ()
+    message("-- Warning: Downloads for '${TARGET_ARCH}' architecture not found.")
+  endif ()
+endif (NOT HAVE_UEYE_H)
+
 add_library(ueye_nodelets
   src/Camera.cpp
   src/camera_nodelet.cpp src/CameraNode.cpp

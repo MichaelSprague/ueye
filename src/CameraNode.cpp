@@ -55,7 +55,7 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh) :
   trigger_mode_ = zoom_ = -1;
 
   // Check for a valid uEye installation and supported version
-  char *Version;
+  const char *Version;
   int Major, Minor, Build;
   if (cam_.checkVersion(Major, Minor, Build, Version)) {
     ROS_INFO("Loaded uEye SDK %s.", Version);
