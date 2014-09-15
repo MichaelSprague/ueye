@@ -32,7 +32,7 @@ set(archdetect_c_code "
 #elif defined(__i386) || defined(__i386__) || defined(_M_IX86)
     #error cmake_ARCH i386
 #elif defined(__x86_64) || defined(__x86_64__) || defined(__amd64) || defined(_M_X64)
-    #error cmake_ARCH x86_64
+    #error cmake_ARCH amd64
 #elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
     #error cmake_ARCH ia64
 #elif defined(__ppc__) || defined(__ppc) || defined(__powerpc__) \\
@@ -89,7 +89,7 @@ function(target_architecture output_var)
         endif()
 
         if(osx_arch_x86_64)
-            list(APPEND ARCH x86_64)
+            list(APPEND ARCH amd64)
         endif()
 
         if(osx_arch_ppc64)
