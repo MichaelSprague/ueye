@@ -49,22 +49,22 @@ StereoNode::StereoNode(ros::NodeHandle node, ros::NodeHandle priv_nh) :
   l_stamp_ = r_stamp_ = ros::Time(0);
 
   // Check for a valid uEye installation and supported version
-  const char *Version;
-  int Major, Minor, Build;
-  if (l_cam_.checkVersion(Major, Minor, Build, Version)) {
-    ROS_INFO("Loaded uEye SDK %s.", Version);
+  const char *version;
+  int major, minor, build;
+  if (l_cam_.checkVersion(major, minor, build, version)) {
+    ROS_INFO("Loaded uEye SDK %s.", version);
   } else {
-    ROS_WARN("Loaded uEye SDK %d.%d.%d. Expecting %s.", Major, Minor, Build, Version);
+    ROS_WARN("Loaded uEye SDK %d.%d.%d. Expecting %s.", major, minor, build, version);
   }
 
   // Make sure there is at least one camera available
-  int NumberOfCameras = l_cam_.getNumberOfCameras();
-  if (NumberOfCameras > 0) {
-    if (NumberOfCameras == 1) {
+  int num_cameras = l_cam_.getNumberOfCameras();
+  if (num_cameras > 0) {
+    if (num_cameras == 1) {
       ROS_ERROR("Found 1 uEye camera.");
       ros::shutdown();
     } else {
-      ROS_INFO("Found %d uEye cameras.", NumberOfCameras);
+      ROS_INFO("Found %d uEye cameras.", num_cameras);
     }
   } else {
     ROS_ERROR("Found 0 uEye cameras.");
