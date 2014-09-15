@@ -55,21 +55,21 @@ CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh) :
   trigger_mode_ = zoom_ = -1;
 
   // Check for a valid uEye installation and supported version
-  const char *Version;
-  int Major, Minor, Build;
-  if (cam_.checkVersion(Major, Minor, Build, Version)) {
-    ROS_INFO("Loaded uEye SDK %s.", Version);
+  const char *version;
+  int major, minor, build;
+  if (cam_.checkVersion(major, minor, build, version)) {
+    ROS_INFO("Loaded uEye SDK %s.", version);
   } else {
-    ROS_WARN("Loaded uEye SDK %d.%d.%d. Expecting %s.", Major, Minor, Build, Version);
+    ROS_WARN("Loaded uEye SDK %d.%d.%d. Expecting %s.", major, minor, build, version);
   }
 
   // Make sure there is at least one camera available
-  int NumberOfCameras = cam_.getNumberOfCameras();
-  if (NumberOfCameras > 0) {
-    if (NumberOfCameras == 1) {
+  int num_cameras = cam_.getNumberOfCameras();
+  if (num_cameras > 0) {
+    if (num_cameras == 1) {
       ROS_INFO("Found 1 uEye camera.");
     } else {
-      ROS_INFO("Found %d uEye cameras.", NumberOfCameras);
+      ROS_INFO("Found %d uEye cameras.", num_cameras);
     }
   } else {
     ROS_ERROR("Found 0 uEye cameras.");
