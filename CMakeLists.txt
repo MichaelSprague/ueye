@@ -46,20 +46,20 @@ if (NOT HAVE_UEYE_H)
   target_architecture(TARGET_ARCH)
   message("-- uEye SDK not found. Using downloaded files for '${TARGET_ARCH}' architecture.")
 
-  if (TARGET_ARCH STREQUAL "x86_64")
+  if (TARGET_ARCH STREQUAL "amd64")
     file(DOWNLOAD 
-      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_x86_64.tar.gz
-      ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_x86_64.tar.gz
+      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_amd64.tar.gz
+      ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_amd64.tar.gz
       SHOW_PROGRESS
       INACTIVITY_TIMEOUT 60
-      EXPECTED_MD5 e4363b2772ef0a10c1c6fe0c0247dc8f
+      EXPECTED_MD5 5290609fb3906a3355a6350dd36b2c76
       TLS_VERIFY on)
     execute_process(
-      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_x86_64.tar.gz
+      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_amd64.tar.gz
       WORKING_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty
     )
-    include_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/x86_64)
-    link_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/x86_64)
+    include_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/amd64)
+    link_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/amd64)
   elseif (TARGET_ARCH STREQUAL "i386")
     file(DOWNLOAD 
       https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_i386.tar.gz
