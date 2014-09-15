@@ -34,9 +34,45 @@
 
 #include "ueye/Camera.h"
 
-#if UEYE_VERSION_CODE != UEYE_VERSION(4, 40, 0)
-#warning Expected ueye driver version 4.40.x. Different version found in uEye.h.
+// Check expected uEye SDK version in ueye.h for supported architectures
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86)
+  #define EXPECTED_VERSION_MAJOR 4
+  #define EXPECTED_VERSION_MINOR 40
+  #define EXPECTED_VERSION_BUILD 19
+  #if UEYE_VERSION_CODE != UEYE_VERSION(EXPECTED_VERSION_MAJOR, EXPECTED_VERSION_MINOR, 0)
+  #warning Expected ueye driver version 4.40.x. Different version found in ueye.h.
+  #endif
+#elif defined(__x86_64) || defined(__x86_64__) || defined(__amd64) || defined(_M_X64)
+  #define EXPECTED_VERSION_MAJOR 4
+  #define EXPECTED_VERSION_MINOR 40
+  #define EXPECTED_VERSION_BUILD 19
+  #if UEYE_VERSION_CODE != UEYE_VERSION(EXPECTED_VERSION_MAJOR, EXPECTED_VERSION_MINOR, 0)
+  #warning Expected ueye driver version 4.40.x. Different version found in ueye.h.
+  #endif
+#elif defined(__arm__) || defined(__TARGET_ARCH_ARM)
+  #define EXPECTED_VERSION_MAJOR 4
+  #define EXPECTED_VERSION_MINOR 30
+  #define EXPECTED_VERSION_BUILD 0
+  #if UEYE_VERSION_CODE != UEYE_VERSION(EXPECTED_VERSION_MAJOR, EXPECTED_VERSION_MINOR, 0)
+  #warning Expected ueye driver version 4.30.x. Different version found in ueye.h.
+  #endif
+#elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
+  #define EXPECTED_VERSION_MAJOR 0
+  #define EXPECTED_VERSION_MINOR 0
+  #define EXPECTED_VERSION_BUILD 0
+  #warning Architecture ia64 not explicitly supported.
+#elif defined(__ppc__) || defined(__ppc) || defined(__powerpc__) || defined(_ARCH_COM) || defined(_ARCH_PWR) || defined(_ARCH_PPC) || defined(_M_MPPC) || defined(_M_PPC)
+  #define EXPECTED_VERSION_MAJOR 0
+  #define EXPECTED_VERSION_MINOR 0
+  #define EXPECTED_VERSION_BUILD 0
+  #warning Architecture ppc not explicitly supported.
+#else
+  #define EXPECTED_VERSION_MAJOR 0
+  #define EXPECTED_VERSION_MINOR 0
+  #define EXPECTED_VERSION_BUILD 0
+  #warning Architecture not explicitly supported. Supported: amd64, i386, arm.
 #endif
+
 
 namespace ueye
 {
@@ -83,18 +119,20 @@ Camera::Camera()
   initPrivateVariables();
 }
 
-bool Camera::checkVersion(int &major, int &minor, int &build, char *&expected)
+#define STRING(s) #s
+bool Camera::checkVersion(int &major, int &minor, int &build, const char *&expected)
 {
-  expected = (char*)"4.40.19";
+  expected = STRING(EXPECTED_VERSION_MAJOR) "." STRING(EXPECTED_VERSION_MINOR) "." STRING(EXPECTED_VERSION_BUILD);
   build = is_GetDLLVersion();
   major = (build >> 24) & 0x000000FF;
   minor = (build >> 16) & 0x000000FF;
   build &= 0x0000FFFF;
-  if ((major == 4) && (minor == 40) && (build == 19)) {
+  if ((major == EXPECTED_VERSION_MAJOR) && (minor == EXPECTED_VERSION_MINOR) && (build == EXPECTED_VERSION_BUILD)) {
     return true;
   }
   return false;
 }
+#undef STRING
 
 int Camera::getNumberOfCameras() const
 {
@@ -602,7 +640,7 @@ void Camera::captureThread(CamCaptureCB callback)
   // Setup video event
   checkError(is_EnableEvent(cam_, IS_SET_EVENT_FRAME));
 
-  // There is a weird condition with the ueye 4.30 where
+  // There is a weird condition with the uEye SDK 4.30 where
   // this never returns when using IS_WAIT.
   // We are using IS_DONT_WAIT and retry every 0.1s for 2s instead
   bool capture = false;
