@@ -3,6 +3,7 @@
 <launch>
 
 	<!-- see cfg/mono.cfg for detail -->  
+	<arg name="camera_id"		default="0" />
 	<arg name="auto_exposure"	default="false" />
 	<arg name="auto_gain"		default="false" />
 	<arg name="color"		default="6" /> <!-- 0:MONO8, 1:MONO16, 2:YUV, 3:YCbCr, 4:BGR5, 5:BGR565, 6:BGR8, 7:BGRA8, 9:BGRY8, 9:RGB8, 10:RGBA8, 11, RGBY8 -->
@@ -21,6 +22,7 @@
 	<node pkg="nodelet" type="nodelet" name="ueye_manager" args="manager" output="screen"/>
 
 	<node pkg="nodelet" type="nodelet" name="camera_nodelet" args="load ueye/CameraNodelet ueye_manager" >
+		<param name="cameraId"		value="$(arg camera_id)" />
 		<param name="auto_exposure"	value="$(arg auto_exposure)" />
 		<param name="auto_gain"		value="$(arg auto_gain)" />
 		<param name="color"		value="$(arg color)" />
