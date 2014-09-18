@@ -48,7 +48,8 @@ if (NOT HAVE_UEYE_H)
 
   if (TARGET_ARCH STREQUAL "amd64")
     file(DOWNLOAD 
-      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_amd64.tar.gz
+      #https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_amd64.tar.gz
+      http://download.ros.org/data/ueye/uEye_SDK_4_40_amd64.tar.gz
       ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_amd64.tar.gz
       SHOW_PROGRESS
       INACTIVITY_TIMEOUT 60
@@ -62,7 +63,8 @@ if (NOT HAVE_UEYE_H)
     link_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/amd64)
   elseif (TARGET_ARCH STREQUAL "i386")
     file(DOWNLOAD 
-      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_i386.tar.gz
+      #https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_i386.tar.gz
+      http://download.ros.org/data/ueye/uEye_SDK_4_40_i386.tar.gz
       ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_i386.tar.gz
       SHOW_PROGRESS
       INACTIVITY_TIMEOUT 60
