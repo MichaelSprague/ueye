@@ -77,7 +77,17 @@ if (NOT HAVE_UEYE_H)
     include_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/i386)
     link_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/i386)
   elseif (TARGET_ARCH STREQUAL "arm")
-    # not uploaded yet...
+    file(DOWNLOAD 
+      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_30_arm.tar.gz
+      ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_arm.tar.gz
+      SHOW_PROGRESS
+      INACTIVITY_TIMEOUT 60
+      EXPECTED_MD5 0297e76450084ab21ff9db1a3070f323
+      TLS_VERIFY on)
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_arm.tar.gz
+      WORKING_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty
+    )
     include_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/arm)
     link_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/arm)
   else ()
