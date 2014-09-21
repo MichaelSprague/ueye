@@ -119,10 +119,11 @@ Camera::Camera()
   initPrivateVariables();
 }
 
-#define STRING(s) #s
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
 bool Camera::checkVersion(int &major, int &minor, int &build, const char *&expected)
 {
-  expected = STRING(EXPECTED_VERSION_MAJOR) "." STRING(EXPECTED_VERSION_MINOR) "." STRING(EXPECTED_VERSION_BUILD);
+  expected = STR(EXPECTED_VERSION_MAJOR) "." STR(EXPECTED_VERSION_MINOR) "." STR(EXPECTED_VERSION_BUILD);
   build = is_GetDLLVersion();
   major = (build >> 24) & 0x000000FF;
   minor = (build >> 16) & 0x000000FF;
@@ -132,7 +133,8 @@ bool Camera::checkVersion(int &major, int &minor, int &build, const char *&expec
   }
   return false;
 }
-#undef STRING
+#undef STR_HELPER
+#undef STR
 
 int Camera::getNumberOfCameras() const
 {
