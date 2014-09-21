@@ -52,7 +52,7 @@
 #elif defined(__arm__) || defined(__TARGET_ARCH_ARM)
   #define EXPECTED_VERSION_MAJOR 4
   #define EXPECTED_VERSION_MINOR 30
-  #define EXPECTED_VERSION_BUILD 0
+  #define EXPECTED_VERSION_BUILD 18
   #if UEYE_VERSION_CODE != UEYE_VERSION(EXPECTED_VERSION_MAJOR, EXPECTED_VERSION_MINOR, 0)
   #warning Expected ueye driver version 4.30.x. Different version found in ueye.h.
   #endif
