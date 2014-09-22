@@ -2,8 +2,8 @@
 Changelog for package ueye
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.3 (2014-09-21)
+------------------
 * Added pre-compiled uEye SDK for arm architecture
 * Fixed macro conversion of version numbers to text. Fixes #8
 * Contributors: Kevin Hallenbeck
