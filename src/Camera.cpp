@@ -383,21 +383,29 @@ void Camera::setZoom(int *zoom)
 }
 void Camera::setPixelClock(int *MHz)
 {
-  int ranges[3];
-  memset(ranges, 0x00, sizeof(ranges));
+  int pixelClockList[150];  // No camera has more than 150 different pixel clocks (uEye manual)
+  int numberOfSupportedPixelClocks = 0;
+  checkError(is_PixelClock(cam_, IS_PIXELCLOCK_CMD_GET_NUMBER, &numberOfSupportedPixelClocks, sizeof(numberOfSupportedPixelClocks)));
+  if(numberOfSupportedPixelClocks > 0) {
+    memset(pixelClockList, 0x00, sizeof(pixelClockList));
+    checkError(is_PixelClock(cam_, IS_PIXELCLOCK_CMD_GET_LIST, pixelClockList, numberOfSupportedPixelClocks * sizeof(int)));
+  }
+  int minPixelClock = pixelClockList[0];
+  int maxPixelClock = pixelClockList[numberOfSupportedPixelClocks-1];
 
-  // Sanitize to increment, minimum, and maximum
-  checkError(is_PixelClock(cam_, IS_PIXELCLOCK_CMD_GET_RANGE, ranges, sizeof(ranges)));
-  if (ranges[2] > 1) {
-    if ((*MHz - ranges[0]) % ranges[2] != 0) {
-      *MHz -= (*MHz - ranges[0]) % ranges[2];
-    }
+  // As list is sorted smallest to largest...
+  for(int i = 0; i < numberOfSupportedPixelClocks; i++) { 
+    if(*MHz <= pixelClockList[i]) {
+      *MHz = pixelClockList[i];  // ...get the closest-larger-or-equal from the list
+      break;
+    }  
   }
-  if (*MHz < ranges[0]) {
-    *MHz = ranges[0];
+
+  if (*MHz < minPixelClock) {
+    *MHz = minPixelClock;  // Clip to min
   }
-  if (*MHz > ranges[1]) {
-    *MHz = ranges[1];
+  if (*MHz > maxPixelClock) {
+    *MHz = maxPixelClock;  // Clip to max
   }
 
   checkError(is_PixelClock(cam_, IS_PIXELCLOCK_CMD_SET, MHz, sizeof(int)));
