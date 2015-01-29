@@ -2,8 +2,8 @@
 Changelog for package ueye
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.4 (2015-01-28)
+------------------
 * Allow discrete-only pixelclocks cameras
 * Contributors: Kevin Hallenbeck, Fran Real
 
