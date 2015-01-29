@@ -2,6 +2,11 @@
 Changelog for package ueye
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Allow discrete-only pixelclocks cameras
+* Contributors: Kevin Hallenbeck, Fran Real
+
 0.0.3 (2014-09-21)
 ------------------
 * Added pre-compiled uEye SDK for arm architecture
