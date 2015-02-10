@@ -2,8 +2,8 @@
 Changelog for package ueye
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.5 (2015-02-09)
+------------------
 * Updated amd64, i386, and armhf for uEye SDK 4.60
 * Contributors: Kevin Hallenbeck
 
