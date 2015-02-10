@@ -37,15 +37,15 @@
 // Check expected uEye SDK version in ueye.h for supported architectures
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
   #define EXPECTED_VERSION_MAJOR 4
-  #define EXPECTED_VERSION_MINOR 40
-  #define EXPECTED_VERSION_BUILD 19
+  #define EXPECTED_VERSION_MINOR 60
+  #define EXPECTED_VERSION_BUILD 5
   #if UEYE_VERSION_CODE != UEYE_VERSION(EXPECTED_VERSION_MAJOR, EXPECTED_VERSION_MINOR, 0)
   #warning Expected ueye driver version 4.40.x. Different version found in ueye.h.
   #endif
 #elif defined(__x86_64) || defined(__x86_64__) || defined(__amd64) || defined(_M_X64)
   #define EXPECTED_VERSION_MAJOR 4
-  #define EXPECTED_VERSION_MINOR 40
-  #define EXPECTED_VERSION_BUILD 19
+  #define EXPECTED_VERSION_MINOR 60
+  #define EXPECTED_VERSION_BUILD 5
   #if UEYE_VERSION_CODE != UEYE_VERSION(EXPECTED_VERSION_MAJOR, EXPECTED_VERSION_MINOR, 0)
   #warning Expected ueye driver version 4.40.x. Different version found in ueye.h.
   #endif

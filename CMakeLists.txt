@@ -48,12 +48,12 @@ if (NOT HAVE_UEYE_H)
 
   if (TARGET_ARCH STREQUAL "amd64")
     file(DOWNLOAD 
-      #https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_amd64.tar.gz
-      http://download.ros.org/data/ueye/uEye_SDK_4_40_amd64.tar.gz
+      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_60_amd64.tar.gz
+      #http://download.ros.org/data/ueye/uEye_SDK_4_60_amd64.tar.gz
       ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_amd64.tar.gz
       SHOW_PROGRESS
       INACTIVITY_TIMEOUT 60
-      EXPECTED_MD5 5290609fb3906a3355a6350dd36b2c76
+      EXPECTED_MD5 e56ede9549b84e9093a1d3b4b9ff9344
       TLS_VERIFY on)
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E tar xzf ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_amd64.tar.gz
@@ -63,12 +63,12 @@ if (NOT HAVE_UEYE_H)
     link_directories(${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/amd64)
   elseif (TARGET_ARCH STREQUAL "i386")
     file(DOWNLOAD 
-      #https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_40_i386.tar.gz
-      http://download.ros.org/data/ueye/uEye_SDK_4_40_i386.tar.gz
+      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_60_i386.tar.gz
+      #http://download.ros.org/data/ueye/uEye_SDK_4_60_i386.tar.gz
       ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_i386.tar.gz
       SHOW_PROGRESS
       INACTIVITY_TIMEOUT 60
-      EXPECTED_MD5 d9803f2db1604f5a0993c4b62d395a31
+      EXPECTED_MD5 20db4268dd3c0416d289067277fffef7
       TLS_VERIFY on)
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E tar xzf ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_i386.tar.gz
