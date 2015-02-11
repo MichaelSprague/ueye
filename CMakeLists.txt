@@ -51,8 +51,8 @@ if (NOT HAVE_UEYE_H)
   if (TARGET_ARCH STREQUAL "amd64")
     message("-- The official uEye SDK for amd64: https://en.ids-imaging.com/download-ueye.html?file=tl_files/downloads/uEye_SDK/driver/uEye_Linux_4.60_64_Bit.zip (~71MB)")
     file(DOWNLOAD 
-      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_60_amd64.tar.gz
-      #http://download.ros.org/data/ueye/uEye_SDK_4_60_amd64.tar.gz
+      #https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_60_amd64.tar.gz
+      http://download.ros.org/data/ueye/uEye_SDK_4_60_amd64.tar.gz
       ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_amd64.tar.gz
       SHOW_PROGRESS
       INACTIVITY_TIMEOUT 60
@@ -67,8 +67,8 @@ if (NOT HAVE_UEYE_H)
   elseif (TARGET_ARCH STREQUAL "i386")
     message("-- The official uEye SDK for i386: https://en.ids-imaging.com/download-ueye.html?file=tl_files/downloads/uEye_SDK/driver/uEye_Linux_4.60_32_Bit.zip (~71MB)")
     file(DOWNLOAD 
-      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_60_i386.tar.gz
-      #http://download.ros.org/data/ueye/uEye_SDK_4_60_i386.tar.gz
+      #https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_60_i386.tar.gz
+      http://download.ros.org/data/ueye/uEye_SDK_4_60_i386.tar.gz
       ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_i386.tar.gz
       SHOW_PROGRESS
       INACTIVITY_TIMEOUT 60
@@ -84,7 +84,8 @@ if (NOT HAVE_UEYE_H)
     message("-- The official uEye SDK for armhf: https://en.ids-imaging.com/linux-embedded-downloads.html?file=tl_files/downloads/LinuxEmbedded/uEyeSDK-4.60.00-ARM_LINUX_IDS_GNUEABI_HF.tgz (~20MB)")
     message("-- Assuming 'armhf' architecture. The 'armel' build files are available. However, the buildfarm does not build 'armel', and detection at configure time is difficult.")
     file(DOWNLOAD 
-      https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_60_armhf.tar.gz
+      #https://bitbucket.org/kmhallen/ueye/downloads/uEye_SDK_4_60_armhf.tar.gz
+      http://download.ros.org/data/ueye/uEye_SDK_4_60_armhf.tar.gz
       ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}/3rdparty/uEye_SDK_armhf.tar.gz
       SHOW_PROGRESS
       INACTIVITY_TIMEOUT 60
@@ -151,7 +152,7 @@ if (CATKIN_ENABLE_TESTING)
   find_package(roslaunch REQUIRED)
   find_package(rostest REQUIRED)
 
-   # parse check all the launch/*.launch files
+  # parse check all the launch/*.launch files
   roslaunch_add_file_check(launch)
 
 endif (CATKIN_ENABLE_TESTING)
