@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ueye)
 
-# set default build type
-IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Release)
-ENDIF(NOT CMAKE_BUILD_TYPE)
-
 set(${PROJECT_NAME}_CATKIN_DEPS
   roscpp
   nodelet
@@ -13,11 +8,9 @@ set(${PROJECT_NAME}_CATKIN_DEPS
   std_msgs
   image_transport
   camera_calibration_parsers
-  cv_bridge
 )
 
 find_package(catkin REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_DEPS})
-find_package(OpenCV REQUIRED)
 
 set(${PROJECT_NAME}_INCLUDE_EXPORTS
   include
@@ -33,7 +26,6 @@ catkin_package(
 )
 
 include_directories(
-  ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${${PROJECT_NAME}_INCLUDE_EXPORTS}
 )
@@ -111,7 +103,6 @@ add_library(ueye_nodelets
 add_dependencies(ueye_nodelets ${PROJECT_NAME}_gencfg)
 target_link_libraries(ueye_nodelets
   ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
   ueye_api
 )
 

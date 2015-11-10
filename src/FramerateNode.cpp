@@ -37,7 +37,8 @@
 namespace ueye
 {
 
-FramerateNode::FramerateNode(ros::NodeHandle node, ros::NodeHandle priv_nh)
+FramerateNode::FramerateNode(ros::NodeHandle node, ros::NodeHandle priv_nh) :
+    first_(true), rate_(0.0), stamp_old_(0)
 {
   // Grab the topic name from the ROS parameter
   std::string topic = std::string("/image_raw");
@@ -51,25 +52,22 @@ FramerateNode::~FramerateNode()
 {
 }
 
-void FramerateNode::imageRecv(const sensor_msgs::Image::ConstPtr& rosImg)
+void FramerateNode::imageRecv(const sensor_msgs::Image::ConstPtr& msg)
 {
-  static double rate = 0.0;
-  static long int oldTimeStamp = 0;
-  long int newTimeStamp = ros::Time::now().toNSec();
-  if (oldTimeStamp != 0) {
-    double temp_rate = 1000000000.0 / ((double)(newTimeStamp - oldTimeStamp));
-    if (rate == 0) {
-      rate = temp_rate;
+  ros::Time stamp = ros::Time::now();
+  if (first_) {
+    first_ = false;
+  } else {
+    double temp_rate = (double)1e9 / (double)(stamp - stamp_old_).toNSec();
+    if (rate_ == 0.0) {
+      rate_ = temp_rate;
     } else {
-      rate += (temp_rate - rate) * 0.2;
+      rate_ += (temp_rate - rate_) * 0.2;
     }
   }
-  oldTimeStamp = newTimeStamp;
+  stamp_old_ = stamp;
 
-  // Convert the ROS Image to an OpenCV Mat
-  cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(rosImg, sensor_msgs::image_encodings::RGB8);
-
-  ROS_INFO("%d %dx%d at %0.2fHz", rosImg->header.seq, cv_ptr->image.cols, cv_ptr->image.rows, rate);
+  ROS_INFO("%d %dx%d at %0.2fHz", msg->header.seq, msg->width, msg->height, rate_);
 }
 
 } // namespace ueye
