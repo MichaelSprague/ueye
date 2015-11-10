@@ -43,7 +43,6 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/SetCameraInfo.h>
-#include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include <camera_calibration_parsers/parse_ini.h>
 
@@ -79,10 +78,10 @@ private:
                      sensor_msgs::CameraInfo &msg_info);
 
   void loadIntrinsics(Camera &cam, sensor_msgs::CameraInfo &msg_info);
-  sensor_msgs::ImagePtr processFrame(IplImage* frame, Camera &cam, cv_bridge::CvImage &converter,
+  sensor_msgs::ImagePtr processFrame(const char *frame, size_t size, const Camera &cam,
                                      sensor_msgs::CameraInfoPtr &info, sensor_msgs::CameraInfo &msg_info);
-  void publishImageL(IplImage * frame);
-  void publishImageR(IplImage * frame);
+  void publishImageL(const char *frame, size_t size);
+  void publishImageR(const char *frame, size_t size);
   void startCamera();
   void stopCamera();
   void closeCamera();
@@ -93,7 +92,6 @@ private:
   ros::Timer timer_force_trigger_;
   sensor_msgs::CameraInfo l_msg_camera_info_, r_msg_camera_info_;
 
-  cv_bridge::CvImage l_converter_, r_converter_;
   ueye::Camera l_cam_, r_cam_;
   bool running_;
   bool configured_;

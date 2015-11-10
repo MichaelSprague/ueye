@@ -37,8 +37,7 @@
 
 // ROS includes
 #include "ros/ros.h"
-#include <sensor_msgs/image_encodings.h>
-#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/Image.h>
 
 namespace ueye
 {
@@ -55,6 +54,10 @@ private:
 
   // ROS topics
   ros::Subscriber sub_;
+
+  bool first_;
+  double rate_;
+  ros::Time stamp_old_;
 };
 
 } // namespace ueye

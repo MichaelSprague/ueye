@@ -36,7 +36,6 @@
 #define UEYE_CAMERA_H_
 
 #include <ueye.h>
-#include <opencv/cv.h>
 #include <stdexcept>
 #include <string>
 #include <boost/function.hpp>
@@ -143,7 +142,7 @@ public:
 
   bool forceTrigger();
 
-  typedef boost::function<void(IplImage *)> CamCaptureCB;
+  typedef boost::function<void(const char *, size_t)> CamCaptureCB;
   void startVideoCapture(CamCaptureCB);
   void stopVideoCapture();
 
@@ -178,8 +177,8 @@ private:
   SENSORINFO cam_info_;
   unsigned int serial_number_;
 
-  bool streaming_;
-  bool stop_capture_;
+  volatile bool streaming_;
+  volatile bool stop_capture_;
   CamCaptureCB stream_callback_;
   boost::thread thread_;
 

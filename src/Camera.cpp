@@ -642,7 +642,6 @@ void Camera::destroyMemoryPool()
 void Camera::captureThread(CamCaptureCB callback)
 {
   streaming_ = true;
-  char * img_mem;
   stop_capture_ = false;
 
   initMemoryPool(4);
@@ -665,41 +664,42 @@ void Camera::captureThread(CamCaptureCB callback)
     throw uEyeException(-1, "Capture could not be started.");
   }
 
-  IplImage *p_img = NULL;
+  size_t depth = 0;
   switch (color_mode_) {
     case MONO8:
-      p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_8U, 1);
+      depth = 1;
       break;
     case MONO16:
     case BGR5:
     case BGR565:
-      p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_16U, 1);
+      depth = 1;
       break;
     case YUV:
     case YCbCr:
-      p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_8U, 2);
+      depth = 2;
       break;
     case BGR8:
     case RGB8:
-      p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_8U, 3);
+      depth = 3;
       break;
     case BGRA8:
     case BGRY8:
     case RGBA8:
     case RGBY8:
-      p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_8U, 4);
+      depth = 4;
       break;
     default:
       throw uEyeException(-1, "Unsupported color mode when initializing image header.");
       return;
   }
+  size_t size = (size_t)getWidth() * (size_t)getHeight() * depth;
 
+  char *img_mem;
   while (!stop_capture_) {
     // Wait for image. Timeout after 2*FramePeriod = (2000ms/FrameRate)
     if (is_WaitEvent(cam_, IS_SET_EVENT_FRAME, (int)(2000 / frame_rate_)) == IS_SUCCESS) {
       if (is_GetImageMem(cam_, (void**)&img_mem) == IS_SUCCESS) {
-        p_img->imageData = img_mem;
-        callback(p_img);
+        callback(img_mem, size);
       }
     }
   }
