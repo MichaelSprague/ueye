@@ -460,7 +460,7 @@ sensor_msgs::ImagePtr StereoNode::processFrame(const char *frame, size_t size, c
   sensor_msgs::CameraInfoPtr msg(new sensor_msgs::CameraInfo(msg_info));
   info = msg;
 
-  sensor_msgs::ImagePtr msg_image;
+  sensor_msgs::ImagePtr msg_image(new sensor_msgs::Image());
   msg_image->header = msg_info.header;
   msg_image->height = msg_info.height;
   msg_image->width = msg_info.width;

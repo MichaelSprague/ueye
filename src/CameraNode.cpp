@@ -355,7 +355,7 @@ sensor_msgs::ImagePtr CameraNode::processFrame(const char *frame, size_t size, s
   sensor_msgs::CameraInfoPtr msg(new sensor_msgs::CameraInfo(msg_camera_info_));
   info = msg;
 
-  sensor_msgs::ImagePtr msg_image;
+  sensor_msgs::ImagePtr msg_image(new sensor_msgs::Image());
   msg_image->header = msg_camera_info_.header;
   msg_image->height = msg_camera_info_.height;
   msg_image->width = msg_camera_info_.width;
