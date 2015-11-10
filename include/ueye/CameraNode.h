@@ -46,7 +46,7 @@
 
 // Dynamic reconfigure
 #include <dynamic_reconfigure/server.h>
-#include "ueye/monoConfig.h"
+#include <ueye/monoConfig.h>
 
 // File IO
 #include <sstream>
