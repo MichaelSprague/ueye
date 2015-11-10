@@ -35,28 +35,13 @@
 #ifndef _STEREO_NODE_H_
 #define _STEREO_NODE_H_
 
-// ROS communication
-#include <ros/ros.h>
-#include <ros/package.h>	// finds package paths
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
-#include <sensor_msgs/SetCameraInfo.h>
-#include <image_transport/image_transport.h>
-#include <camera_calibration_parsers/parse_ini.h>
-
-// Dynamic reconfigure
-#include <dynamic_reconfigure/server.h>
-#include "ueye/stereoConfig.h"
-
-// File IO
-#include <sstream>
-#include <fstream>
-
-// ueye::Camera class
-#include <ueye/Camera.h>
-
-// Single camera node for configFileName()
+// Use includes from CameraNode
 #include <ueye/CameraNode.h>
+#include <ueye/stereoConfig.h>
+
+// Threading
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/lock_guard.hpp>
 
 namespace ueye
 {
@@ -108,6 +93,9 @@ private:
   image_transport::ImageTransport it_;
   image_transport::CameraPublisher l_pub_stream_, r_pub_stream_;
   ros::ServiceServer l_srv_cam_info_, r_srv_cam_info_;
+
+  // Threading
+  boost::mutex mutex_;
 };
 
 } // namespace ueye

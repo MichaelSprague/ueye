@@ -475,8 +475,10 @@ sensor_msgs::ImagePtr StereoNode::processFrame(const char *frame, size_t size, c
 // Timestamp and publish the image. Called by the streaming thread.
 void StereoNode::publishImageL(const char *frame, size_t size)
 {
+  ros::Time stamp = ros::Time::now();
+  boost::lock_guard<boost::mutex> lock(mutex_);
+  l_stamp_ = stamp;
   l_msg_camera_info_.header.seq++;
-  l_stamp_ = ros::Time::now();
   double diff = (l_stamp_ - r_stamp_).toSec();
   if ((diff >= 0) && (diff < 0.02)) {
     l_msg_camera_info_.header = r_msg_camera_info_.header;
@@ -489,8 +491,10 @@ void StereoNode::publishImageL(const char *frame, size_t size)
 }
 void StereoNode::publishImageR(const char *frame, size_t size)
 {
+  ros::Time stamp = ros::Time::now();
+  boost::lock_guard<boost::mutex> lock(mutex_);
+  r_stamp_ = stamp;
   r_msg_camera_info_.header.seq++;
-  r_stamp_ = ros::Time::now();
   double diff = (r_stamp_ - l_stamp_).toSec();
   if ((diff >= 0) && (diff < 0.02)) {
     r_msg_camera_info_.header = l_msg_camera_info_.header;
