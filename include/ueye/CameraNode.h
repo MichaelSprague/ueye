@@ -58,7 +58,11 @@
 namespace ueye
 {
 
-const std::string configFileName(Camera &cam);
+static std::string configFileName(const Camera &cam) {
+  std::stringstream ss;
+  ss << "Cal-" << cam.getCameraName() << "-" << cam.getZoom() << "-" << cam.getCameraSerialNo() << ".txt";
+  return ss.str();
+}
 
 class CameraNode
 {

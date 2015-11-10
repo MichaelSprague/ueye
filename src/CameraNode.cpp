@@ -37,13 +37,6 @@
 namespace ueye
 {
 
-const std::string configFileName(Camera &cam)
-{
-  std::stringstream ss;
-  ss << "Cal-" << cam.getCameraName() << "-" << cam.getZoom() << "-" << cam.getCameraSerialNo() << ".txt";
-  return ss.str();
-}
-
 CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh) :
     srv_(priv_nh), it_(node)
 {

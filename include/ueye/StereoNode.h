@@ -35,8 +35,6 @@
 #ifndef _STEREO_NODE_H_
 #define _STEREO_NODE_H_
 
-#include "CameraNode.h"
-
 // ROS communication
 #include <ros/ros.h>
 #include <ros/package.h>	// finds package paths
@@ -56,6 +54,9 @@
 
 // ueye::Camera class
 #include <ueye/Camera.h>
+
+// Single camera node for configFileName()
+#include <ueye/CameraNode.h>
 
 namespace ueye
 {
