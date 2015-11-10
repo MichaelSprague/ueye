@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include "ueye/Camera.h"
+#include <ueye/Camera.h>
 
 // Check expected uEye SDK version in ueye.h for supported architectures
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
@@ -76,22 +76,6 @@
 
 namespace ueye
 {
-
-void Camera::checkError(INT err) const
-{
-  INT err2 = IS_SUCCESS;
-  IS_CHAR* msg;
-  if (err != IS_SUCCESS) {
-    if (cam_ != 0) {
-      is_GetError(cam_, &err2, &msg);
-      if (err2 != IS_SUCCESS) {
-        throw ueye::uEyeException(err, msg);
-      }
-    } else {
-      throw ueye::uEyeException(err, "Camera failed to initialize");
-    }
-  }
-}
 
 void Camera::initPrivateVariables()
 {
@@ -242,74 +226,22 @@ const char* Camera::colorModeToString(uEyeColor mode)
   return "";
 }
 
-const char * Camera::getCameraName() const
-{
-  return cam_info_.strSensorName;
-}
-unsigned int Camera::getCameraSerialNo() const
-{
-  return serial_number_;
-}
-int Camera::getZoom() const
-{
-  return zoom_;
-}
-int Camera::getWidthMax() const
-{
-  return cam_info_.nMaxWidth;
-}
-int Camera::getHeightMax() const
-{
-  return cam_info_.nMaxHeight;
-}
-int Camera::getWidth() const
-{
-  return cam_info_.nMaxWidth / zoom_;
-}
-int Camera::getHeight() const
-{
-  return cam_info_.nMaxHeight / zoom_;
-}
-uEyeColor Camera::getColorMode() const
-{
-  return color_mode_;
-}
-bool Camera::getAutoExposure() const
-{
-  return auto_exposure_;
-}
-double Camera::getExposure() const
+double Camera::getExposure()
 {
   double time_ms;
   checkError(is_Exposure(cam_, IS_EXPOSURE_CMD_GET_EXPOSURE, &time_ms, sizeof(double)));
   return time_ms;
-}
-bool Camera::getHardwareGamma() const
-{
-  return hardware_gamma_;
-}
-int Camera::getPixelClock() const
-{
-  return pixel_clock_;
-}
-bool Camera::getGainBoost() const
-{
-  return gain_boost_;
-}
-bool Camera::getAutoGain() const
-{
-  return auto_gain_;
 }
 unsigned int Camera::getHardwareGain()
 {
   hardware_gain_ = is_SetHWGainFactor(cam_, IS_GET_MASTER_GAIN_FACTOR, 0);
   return hardware_gain_;
 }
-TriggerMode Camera::getTriggerMode() const
+TriggerMode Camera::getTriggerMode()
 {
   return (TriggerMode)is_SetExternalTrigger(cam_, IS_GET_EXTERNALTRIGGER);
 }
-TriggerMode Camera::getSupportedTriggers() const
+TriggerMode Camera::getSupportedTriggers()
 {
   return (TriggerMode)is_SetExternalTrigger(cam_, IS_GET_SUPPORTED_TRIGGER_MODE);
 }
