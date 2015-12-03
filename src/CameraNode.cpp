@@ -37,13 +37,6 @@
 namespace ueye
 {
 
-const std::string configFileName(Camera &cam)
-{
-  std::stringstream ss;
-  ss << "Cal-" << cam.getCameraName() << "-" << cam.getZoom() << "-" << cam.getCameraSerialNo() << ".txt";
-  return ss.str();
-}
-
 CameraNode::CameraNode(ros::NodeHandle node, ros::NodeHandle priv_nh) :
     srv_(priv_nh), it_(node)
 {
@@ -350,10 +343,9 @@ void CameraNode::loadIntrinsics()
 }
 
 // Add properties to image message
-sensor_msgs::ImagePtr CameraNode::processFrame(IplImage* frame, sensor_msgs::CameraInfoPtr &info)
+sensor_msgs::ImagePtr CameraNode::processFrame(const char *frame, size_t size, sensor_msgs::CameraInfoPtr &info)
 {
   msg_camera_info_.header.stamp = ros::Time::now();
-  msg_camera_info_.header.seq++;
   msg_camera_info_.roi.x_offset = 0;
   msg_camera_info_.roi.y_offset = 0;
   msg_camera_info_.height = cam_.getHeight();
@@ -363,17 +355,23 @@ sensor_msgs::ImagePtr CameraNode::processFrame(IplImage* frame, sensor_msgs::Cam
   sensor_msgs::CameraInfoPtr msg(new sensor_msgs::CameraInfo(msg_camera_info_));
   info = msg;
 
-  converter_.header = msg_camera_info_.header;
-  converter_.encoding = Camera::colorModeToString(cam_.getColorMode());
-  converter_.image = frame;
-  return converter_.toImageMsg();
+  sensor_msgs::ImagePtr msg_image(new sensor_msgs::Image());
+  msg_image->header = msg_camera_info_.header;
+  msg_image->height = msg_camera_info_.height;
+  msg_image->width = msg_camera_info_.width;
+  msg_image->encoding = Camera::colorModeToString(cam_.getColorMode());
+  msg_image->is_bigendian = false;
+  msg_image->step = size / msg_image->height;
+  msg_image->data.resize(size);
+  memcpy(msg_image->data.data(), frame, size);
+  return msg_image;
 }
 
 // Timestamp and publish the image. Called by the streaming thread.
-void CameraNode::publishImage(IplImage * frame)
+void CameraNode::publishImage(const char *frame, size_t size)
 {
   sensor_msgs::CameraInfoPtr info;
-  sensor_msgs::ImagePtr img = processFrame(frame, info);
+  sensor_msgs::ImagePtr img = processFrame(frame, size, info);
   pub_stream_.publish(img, info);
 }
 
@@ -381,7 +379,7 @@ void CameraNode::startCamera()
 {
   if (running_ || !configured_)
     return;
-  cam_.startVideoCapture(boost::bind(&CameraNode::publishImage, this, _1));
+  cam_.startVideoCapture(boost::bind(&CameraNode::publishImage, this, _1, _2));
   ROS_INFO("Started video stream.");
   running_ = true;
 }

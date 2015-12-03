@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include "ueye/Camera.h"
+#include <ueye/Camera.h>
 
 // Check expected uEye SDK version in ueye.h for supported architectures
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
@@ -76,22 +76,6 @@
 
 namespace ueye
 {
-
-void Camera::checkError(INT err) const
-{
-  INT err2 = IS_SUCCESS;
-  IS_CHAR* msg;
-  if (err != IS_SUCCESS) {
-    if (cam_ != 0) {
-      is_GetError(cam_, &err2, &msg);
-      if (err2 != IS_SUCCESS) {
-        throw ueye::uEyeException(err, msg);
-      }
-    } else {
-      throw ueye::uEyeException(err, "Camera failed to initialize");
-    }
-  }
-}
 
 void Camera::initPrivateVariables()
 {
@@ -242,74 +226,22 @@ const char* Camera::colorModeToString(uEyeColor mode)
   return "";
 }
 
-const char * Camera::getCameraName() const
-{
-  return cam_info_.strSensorName;
-}
-unsigned int Camera::getCameraSerialNo() const
-{
-  return serial_number_;
-}
-int Camera::getZoom() const
-{
-  return zoom_;
-}
-int Camera::getWidthMax() const
-{
-  return cam_info_.nMaxWidth;
-}
-int Camera::getHeightMax() const
-{
-  return cam_info_.nMaxHeight;
-}
-int Camera::getWidth() const
-{
-  return cam_info_.nMaxWidth / zoom_;
-}
-int Camera::getHeight() const
-{
-  return cam_info_.nMaxHeight / zoom_;
-}
-uEyeColor Camera::getColorMode() const
-{
-  return color_mode_;
-}
-bool Camera::getAutoExposure() const
-{
-  return auto_exposure_;
-}
-double Camera::getExposure() const
+double Camera::getExposure()
 {
   double time_ms;
   checkError(is_Exposure(cam_, IS_EXPOSURE_CMD_GET_EXPOSURE, &time_ms, sizeof(double)));
   return time_ms;
-}
-bool Camera::getHardwareGamma() const
-{
-  return hardware_gamma_;
-}
-int Camera::getPixelClock() const
-{
-  return pixel_clock_;
-}
-bool Camera::getGainBoost() const
-{
-  return gain_boost_;
-}
-bool Camera::getAutoGain() const
-{
-  return auto_gain_;
 }
 unsigned int Camera::getHardwareGain()
 {
   hardware_gain_ = is_SetHWGainFactor(cam_, IS_GET_MASTER_GAIN_FACTOR, 0);
   return hardware_gain_;
 }
-TriggerMode Camera::getTriggerMode() const
+TriggerMode Camera::getTriggerMode()
 {
   return (TriggerMode)is_SetExternalTrigger(cam_, IS_GET_EXTERNALTRIGGER);
 }
-TriggerMode Camera::getSupportedTriggers() const
+TriggerMode Camera::getSupportedTriggers()
 {
   return (TriggerMode)is_SetExternalTrigger(cam_, IS_GET_SUPPORTED_TRIGGER_MODE);
 }
@@ -642,7 +574,6 @@ void Camera::destroyMemoryPool()
 void Camera::captureThread(CamCaptureCB callback)
 {
   streaming_ = true;
-  char * img_mem;
   stop_capture_ = false;
 
   initMemoryPool(4);
@@ -665,41 +596,42 @@ void Camera::captureThread(CamCaptureCB callback)
     throw uEyeException(-1, "Capture could not be started.");
   }
 
-  IplImage *p_img = NULL;
+  size_t depth = 0;
   switch (color_mode_) {
     case MONO8:
-      p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_8U, 1);
+      depth = 1;
       break;
     case MONO16:
     case BGR5:
     case BGR565:
-      p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_16U, 1);
+      depth = 1;
       break;
     case YUV:
     case YCbCr:
-      p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_8U, 2);
+      depth = 2;
       break;
     case BGR8:
     case RGB8:
-      p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_8U, 3);
+      depth = 3;
       break;
     case BGRA8:
     case BGRY8:
     case RGBA8:
     case RGBY8:
-      p_img = cvCreateImageHeader(cvSize(getWidth(), getHeight()), IPL_DEPTH_8U, 4);
+      depth = 4;
       break;
     default:
       throw uEyeException(-1, "Unsupported color mode when initializing image header.");
       return;
   }
+  size_t size = (size_t)getWidth() * (size_t)getHeight() * depth;
 
+  char *img_mem;
   while (!stop_capture_) {
     // Wait for image. Timeout after 2*FramePeriod = (2000ms/FrameRate)
     if (is_WaitEvent(cam_, IS_SET_EVENT_FRAME, (int)(2000 / frame_rate_)) == IS_SUCCESS) {
       if (is_GetImageMem(cam_, (void**)&img_mem) == IS_SUCCESS) {
-        p_img->imageData = img_mem;
-        callback(p_img);
+        callback(img_mem, size);
       }
     }
   }

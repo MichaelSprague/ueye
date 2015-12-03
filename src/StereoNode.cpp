@@ -448,7 +448,7 @@ void StereoNode::loadIntrinsics(Camera &cam, sensor_msgs::CameraInfo &msg_info)
 }
 
 // Add properties to image message
-sensor_msgs::ImagePtr StereoNode::processFrame(IplImage* frame, Camera &cam, cv_bridge::CvImage &converter,
+sensor_msgs::ImagePtr StereoNode::processFrame(const char *frame, size_t size, const Camera &cam,
                                                sensor_msgs::CameraInfoPtr &info, sensor_msgs::CameraInfo &msg_info)
 {
   msg_info.roi.x_offset = 0;
@@ -460,39 +460,47 @@ sensor_msgs::ImagePtr StereoNode::processFrame(IplImage* frame, Camera &cam, cv_
   sensor_msgs::CameraInfoPtr msg(new sensor_msgs::CameraInfo(msg_info));
   info = msg;
 
-  converter.header = msg_info.header;
-  converter.encoding = Camera::colorModeToString(cam.getColorMode());
-  converter.image = frame;
-  return converter.toImageMsg();
+  sensor_msgs::ImagePtr msg_image(new sensor_msgs::Image());
+  msg_image->header = msg_info.header;
+  msg_image->height = msg_info.height;
+  msg_image->width = msg_info.width;
+  msg_image->encoding = Camera::colorModeToString(cam.getColorMode());
+  msg_image->is_bigendian = false;
+  msg_image->step = size / msg_image->height;
+  msg_image->data.resize(size);
+  memcpy(msg_image->data.data(), frame, size);
+  return msg_image;
 }
 
 // Timestamp and publish the image. Called by the streaming thread.
-void StereoNode::publishImageL(IplImage * frame)
+void StereoNode::publishImageL(const char *frame, size_t size)
 {
-  l_msg_camera_info_.header.seq++;
-  l_stamp_ = ros::Time::now();
+  ros::Time stamp = ros::Time::now();
+  boost::lock_guard<boost::mutex> lock(mutex_);
+  l_stamp_ = stamp;
   double diff = (l_stamp_ - r_stamp_).toSec();
   if ((diff >= 0) && (diff < 0.02)) {
-    l_msg_camera_info_.header = r_msg_camera_info_.header;
+    l_msg_camera_info_.header.stamp = r_msg_camera_info_.header.stamp;
   } else {
     l_msg_camera_info_.header.stamp = l_stamp_;
   }
   sensor_msgs::CameraInfoPtr info;
-  sensor_msgs::ImagePtr img = processFrame(frame, l_cam_, l_converter_, info, l_msg_camera_info_);
+  sensor_msgs::ImagePtr img = processFrame(frame, size, l_cam_, info, l_msg_camera_info_);
   l_pub_stream_.publish(img, info);
 }
-void StereoNode::publishImageR(IplImage * frame)
+void StereoNode::publishImageR(const char *frame, size_t size)
 {
-  r_msg_camera_info_.header.seq++;
-  r_stamp_ = ros::Time::now();
+  ros::Time stamp = ros::Time::now();
+  boost::lock_guard<boost::mutex> lock(mutex_);
+  r_stamp_ = stamp;
   double diff = (r_stamp_ - l_stamp_).toSec();
   if ((diff >= 0) && (diff < 0.02)) {
-    r_msg_camera_info_.header = l_msg_camera_info_.header;
+    r_msg_camera_info_.header.stamp = l_msg_camera_info_.header.stamp;
   } else {
     r_msg_camera_info_.header.stamp = r_stamp_;
   }
   sensor_msgs::CameraInfoPtr info;
-  sensor_msgs::ImagePtr img = processFrame(frame, r_cam_, r_converter_, info, r_msg_camera_info_);
+  sensor_msgs::ImagePtr img = processFrame(frame, size, r_cam_, info, r_msg_camera_info_);
   r_pub_stream_.publish(img, info);
 }
 
@@ -500,8 +508,8 @@ void StereoNode::startCamera()
 {
   if (running_ || !configured_)
     return;
-  l_cam_.startVideoCapture(boost::bind(&StereoNode::publishImageL, this, _1));
-  r_cam_.startVideoCapture(boost::bind(&StereoNode::publishImageR, this, _1));
+  l_cam_.startVideoCapture(boost::bind(&StereoNode::publishImageL, this, _1, _2));
+  r_cam_.startVideoCapture(boost::bind(&StereoNode::publishImageR, this, _1, _2));
   timer_force_trigger_.start();
   ROS_INFO("Started video stream.");
   running_ = true;
