@@ -36,7 +36,6 @@
 #define UEYE_CAMERA_H_
 
 #include <ueye.h>
-#include <opencv/cv.h>
 #include <stdexcept>
 #include <string>
 #include <boost/function.hpp>
@@ -106,23 +105,23 @@ public:
   static const char* colorModeToString(uEyeColor mode);
 
   // Get Properties
-  const char * getCameraName() const;
-  unsigned int getCameraSerialNo() const;
-  int getWidthMax() const;
-  int getHeightMax() const;
-  int getWidth() const;
-  int getHeight() const;
-  int getZoom() const;
-  uEyeColor getColorMode() const;
-  bool getAutoExposure() const;
-  double getExposure() const;
-  bool getHardwareGamma() const;
-  int getPixelClock() const;
-  bool getGainBoost() const;
-  bool getAutoGain() const;
+  const char * getCameraName() const { return cam_info_.strSensorName; }
+  unsigned int getCameraSerialNo() const { return serial_number_; }
+  int getWidthMax() const { return cam_info_.nMaxWidth; }
+  int getHeightMax() const { return cam_info_.nMaxHeight; }
+  int getWidth() const { return cam_info_.nMaxWidth / zoom_; }
+  int getHeight() const { return cam_info_.nMaxHeight / zoom_; }
+  int getZoom() const { return zoom_; }
+  uEyeColor getColorMode() const { return color_mode_; }
+  bool getAutoExposure() const { return auto_exposure_; }
+  double getExposure();
+  bool getHardwareGamma() const { return hardware_gamma_; }
+  int getPixelClock() const { return pixel_clock_; }
+  bool getGainBoost() const { return gain_boost_; }
+  bool getAutoGain() const { return auto_gain_; }
   unsigned int getHardwareGain();
-  TriggerMode getTriggerMode() const;
-  TriggerMode getSupportedTriggers() const;
+  TriggerMode getTriggerMode();
+  TriggerMode getSupportedTriggers();
 
   // Set Properties
   void setColorMode(uEyeColor mode);
@@ -143,14 +142,27 @@ public:
 
   bool forceTrigger();
 
-  typedef boost::function<void(IplImage *)> CamCaptureCB;
+  typedef boost::function<void(const char *, size_t)> CamCaptureCB;
   void startVideoCapture(CamCaptureCB);
   void stopVideoCapture();
 
   void closeCamera();
 
 private:
-  inline void checkError(INT err) const;
+  inline void checkError(INT err) const {
+    INT err2 = IS_SUCCESS;
+    IS_CHAR* msg;
+    if (err != IS_SUCCESS) {
+      if (cam_ != 0) {
+        is_GetError(cam_, &err2, &msg);
+        if (err2 != IS_SUCCESS) {
+          throw ueye::uEyeException(err, msg);
+        }
+      } else {
+        throw ueye::uEyeException(err, "Camera failed to initialize");
+      }
+    }
+  }
   void initPrivateVariables();
   int getSubsampleParam(int *scale);
   int getBinningParam(int *scale);
@@ -178,8 +190,8 @@ private:
   SENSORINFO cam_info_;
   unsigned int serial_number_;
 
-  bool streaming_;
-  bool stop_capture_;
+  volatile bool streaming_;
+  volatile bool stop_capture_;
   CamCaptureCB stream_callback_;
   boost::thread thread_;
 
