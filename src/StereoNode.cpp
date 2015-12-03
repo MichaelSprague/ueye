@@ -478,10 +478,9 @@ void StereoNode::publishImageL(const char *frame, size_t size)
   ros::Time stamp = ros::Time::now();
   boost::lock_guard<boost::mutex> lock(mutex_);
   l_stamp_ = stamp;
-  l_msg_camera_info_.header.seq++;
   double diff = (l_stamp_ - r_stamp_).toSec();
   if ((diff >= 0) && (diff < 0.02)) {
-    l_msg_camera_info_.header = r_msg_camera_info_.header;
+    l_msg_camera_info_.header.stamp = r_msg_camera_info_.header.stamp;
   } else {
     l_msg_camera_info_.header.stamp = l_stamp_;
   }
@@ -494,10 +493,9 @@ void StereoNode::publishImageR(const char *frame, size_t size)
   ros::Time stamp = ros::Time::now();
   boost::lock_guard<boost::mutex> lock(mutex_);
   r_stamp_ = stamp;
-  r_msg_camera_info_.header.seq++;
   double diff = (r_stamp_ - l_stamp_).toSec();
   if ((diff >= 0) && (diff < 0.02)) {
-    r_msg_camera_info_.header = l_msg_camera_info_.header;
+    r_msg_camera_info_.header.stamp = l_msg_camera_info_.header.stamp;
   } else {
     r_msg_camera_info_.header.stamp = r_stamp_;
   }
