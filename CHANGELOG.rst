@@ -2,6 +2,11 @@
 Changelog for package ueye
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Forgot to remove cv_bridge in package.xml
+* Contributors: Kevin Hallenbeck
+
 0.0.7 (2015-12-04)
 ------------------
 * Fixed frame_id not set properly in stereo node
