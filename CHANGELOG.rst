@@ -2,8 +2,8 @@
 Changelog for package ueye
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.7 (2015-12-04)
+------------------
 * Fixed frame_id not set properly in stereo node
 * Lock stereo threads with a mutex
 * Inline functions for Camera class getters
