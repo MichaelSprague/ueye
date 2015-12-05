@@ -2,6 +2,14 @@
 Changelog for package ueye
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed frame_id not set properly in stereo node
+* Lock stereo threads with a mutex
+* Inline functions for Camera class getters
+* Removed OpenCV dependency
+* Contributors: Kevin Hallenbeck
+
 0.0.6 (2015-02-11)
 ------------------
 * SDK downloads point to download.ros.org to support the legacy build-farm
