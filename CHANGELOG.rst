@@ -2,8 +2,8 @@
 Changelog for package ueye
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.8 (2015-12-04)
+------------------
 * Forgot to remove cv_bridge in package.xml
 * Contributors: Kevin Hallenbeck
 
