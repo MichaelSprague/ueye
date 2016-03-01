@@ -467,15 +467,37 @@ bool Camera::forceTrigger()
 int Camera::getSubsampleParam(int *scale)
 {
   int param;
-  if (*scale == 3) {
-    *scale = 2;
-  }
   switch (*scale) {
     case 2:
       param = IS_SUBSAMPLING_2X_VERTICAL | IS_SUBSAMPLING_2X_HORIZONTAL;
       break;
+    case 3:
+      param = IS_SUBSAMPLING_3X_VERTICAL | IS_SUBSAMPLING_3X_HORIZONTAL;
+      break;
     case 4:
       param = IS_SUBSAMPLING_4X_VERTICAL | IS_SUBSAMPLING_4X_HORIZONTAL;
+      break;
+    case 5:
+      param = IS_SUBSAMPLING_5X_VERTICAL | IS_SUBSAMPLING_5X_HORIZONTAL;
+      break;
+    case 6:
+      param = IS_SUBSAMPLING_6X_VERTICAL | IS_SUBSAMPLING_6X_HORIZONTAL;
+      break;
+    case 7:
+    case 8:
+      *scale = 8;
+      param = IS_SUBSAMPLING_8X_VERTICAL | IS_SUBSAMPLING_8X_HORIZONTAL;
+      break;
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+      *scale = 16;
+      param = IS_SUBSAMPLING_16X_VERTICAL | IS_SUBSAMPLING_16X_HORIZONTAL;
       break;
     default:
       *scale = 1;
@@ -487,15 +509,37 @@ int Camera::getSubsampleParam(int *scale)
 int Camera::getBinningParam(int *scale)
 {
   int param;
-  if (*scale == 3) {
-    *scale = 2;
-  }
   switch (*scale) {
     case 2:
       param = IS_BINNING_2X_VERTICAL | IS_BINNING_2X_HORIZONTAL;
       break;
+    case 3:
+      param = IS_BINNING_3X_VERTICAL | IS_BINNING_3X_HORIZONTAL;
+      break;
     case 4:
       param = IS_BINNING_4X_VERTICAL | IS_BINNING_4X_HORIZONTAL;
+      break;
+    case 5:
+      param = IS_BINNING_5X_VERTICAL | IS_BINNING_5X_HORIZONTAL;
+      break;
+    case 6:
+      param = IS_BINNING_6X_VERTICAL | IS_BINNING_6X_HORIZONTAL;
+      break;
+    case 7:
+    case 8:
+      *scale = 8;
+      param = IS_BINNING_8X_VERTICAL | IS_BINNING_8X_HORIZONTAL;
+      break;
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+      *scale = 16;
+      param = IS_BINNING_16X_VERTICAL | IS_BINNING_16X_HORIZONTAL;
       break;
     default:
       *scale = 1;
